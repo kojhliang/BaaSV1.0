@@ -1,0 +1,254 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+<header>
+    <script src="/jquery.min.js"></script>
+	<script src = "/Chart.min.js"></script>
+	<script src = "/angular.min.js"></script>
+	<script src = "/angular-animate.min.js"></script>
+	<script src = "/socket.io.js"></script>
+	<script src = "/angular-sanitize.min.js"></script>
+
+
+    <!--<link rel="stylesheet" type="text/css" href="/uploadifive.css"/>-->
+    <!--<script type="text/javascript" src="/jquery.uploadifive.js"></script>-->
+
+
+
+    <link href="/page.css" type="text/css" rel="stylesheet"/>
+    <script type="text/javascript" src="/page.js"></script>
+
+
+    <script src = "/scripts.js"></script>
+	<script src="/d3.v2.js"></script>
+	<script src="/jquery.ztree.core.min.js"></script>
+
+	<link href="/style_main.css" rel="stylesheet">
+	<link href="/Anton.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/style.css">
+	<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+	<link href="/zTreeStyle.css" rel="stylesheet" />
+    <link href="/dialog.css" rel="stylesheet" />
+
+
+	<title> 网金BaaS平台管理后台 </title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        $(function(){
+
+        })
+    </script>
+
+
+</header>
+
+
+<body ng-controller="CHAINCODE_EXECUTE">
+
+<div class="Block_container smartContract smartContract-v2" >
+	<div class="Block_item block-top">
+        <div class="Block_title">
+            <h1><i class="fa icon-execute"></i><b>实例管理</b></h1>
+		</div>
+		<div class="detail-table execute">
+			<table>
+				<tr class="detail-title">
+					<td>实例名字</td>
+					<td>版本</td>
+					<td>所属合约</td>
+					<td>所属管道</td>
+					<td>初始化参数</td>
+					<td>操作</td>
+				</tr>
+                <tr ng-repeat="data in datas " class="detail-content">
+					<td class="content-1">{{data.ChaincodeName}}</td>
+					<td class="content-2">{{data.version}}</td>
+					<td class="content-3">{{data.uploadchaincodeName}}</td>
+					<td class="content-4">{{data.channelName}}</td>
+					<td class="content-5">{{data.Params}}</td>
+					<td class="handle-content">
+                        <button  ng-click="showInstallLayer(data)">安装</button>
+                        <button  ng-if="data.Status ==1" ng-click="showInitLayer(data,'init')">初始化</button>
+                        <button  ng-if="data.Status ==2" ng-click="showInitLayer(data,'update')">升级</button>
+                    </td>
+				</tr>
+
+				<tr class="detail-pagination">
+					<td colspan="6">
+						<div class="pagination">
+							<div class="page-box">
+								<ul class="page" maxshowpageitem="3" pagelistcount="10" id="page">
+								</ul>
+								<ul class="page page-total">
+									<li class="pageItemDisable">共{{pageCount}}条记录，共{{totalPage}}页</li>
+								</ul>
+							</div>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="detail-notice">
+			注意：不同的初始化参数将产生不同的智能合约。
+		</div>
+	</div>
+</div>
+
+<div class="grey-background"></div>
+<!--安装 start-->
+<div id="install-layer" class="alert-layer deploy-general instance-layer">
+    <h3 class="alert-title">
+        <span>安装</span>
+        <a href="javascript:;" class="alert-close click-close" ng-click="hideInstallLayer()">×</a>
+    </h3>
+    <div class="alert-content">
+        <div class="content-top">
+            <div class="list-item">
+                <label>实例名字：</label>
+                <input ng-model="chaincodeName" type="text" readonly="true">
+            </div>
+            <div class="list-item">
+                <label>实例版本：</label>
+                <input ng-model="chaincodeVersion" type="text" readonly="true">
+            </div>
+            <div class="list-item">
+                <p>请选择需要安装智能合约的节点：</p>
+                <div id="peerTree" class="ztree"></div>
+            </div>
+            <div class="alert-button">
+                <button class="open-resultLayer" ng-click="deployChainCode1()" type="submit" name="button">安装</button>
+                <button class="disabledStyle" type="submit" name="button"><i class="fa fa-uploadingIcon"></i>安装中..</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!--安装 end-->
+<!--初始化 start-->
+<div id="init-layer" class="alert-layer deploy-general instance-layer">
+    <h3 class="alert-title">
+        <span>{{title}}</span>
+        <a href="javascript:;" class="alert-close click-close" ng-click="hideInitLayer()">×</a>
+    </h3>
+    <div class="alert-content">
+        <div class="content-top">
+            <div class="list-item">
+                <label>实例名字：</label>
+                <input ng-model="chaincodeName" type="text" readonly="true">
+            </div>
+            <div class="list-item">
+                <label>实例版本：</label>
+                <input ng-model="chaincodeVersion" type="text" readonly="true">
+			</div>
+			<div class="list-item">
+                <label>管道名字：</label>
+                <input ng-model="channelName" type="text" readonly="true">
+            </div>
+            <div class="list-item" ng-show="showChainCode">
+                <label>请选择智能合约：</label>
+                <select ng-model="selectChainCode"  ng-options=" x.pk_Id as x.Name for x in deployChainCode">
+                    <option value="">请选择</option>
+                </select>
+            </div>
+            <div class="list-item">
+                <p>初始化参数：</p>
+				<div class="list-second-item">
+					<label>参数1：</label>
+					<input  ng-model="userInput1"  type="text">
+					<i class="icon icon-add p10" ng-click="add()">&nbsp;</i>
+					<span>增加参数</span>
+				</div>
+				<div class="list-second-item" ng-repeat="item in paramsList">
+					<label>参数{{$index+2}}：</label>
+					<input ng-model="$parent.conf[$index]"  type="text">
+					<i class="icon icon-delete p10" ng-click="delete($index)">&nbsp;</i>
+				</div>
+			</div>
+			<div class="list-item">
+                <label>背书策略：</label>
+				<input ng-model="endorsePolicy" type="text">
+				<i class="icon icon-problem p10" ng-mouseenter="showTipLayer()">&nbsp;</i>
+            </div>
+            <div class="alert-button">
+                <button class="open-resultLayer" ng-click="commitChaincode()" type="submit" name="button">{{title}}</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!--初始化 end-->
+<!--升级 start-->
+<div id="update-layer" class="alert-layer deploy-general instance-layer">
+    <h3 class="alert-title">
+        <span>升级</span>
+        <a href="javascript:;" class="alert-close click-close" ng-click="hideUpdateLayer()">×</a>
+    </h3>
+    <div class="alert-content">
+        <div class="content-top">
+            <div class="list-item">
+                <label>实例名字：</label>
+                <input ng-model="chaincodeName" type="text">
+            </div>
+            <div class="list-item">
+                <label>版本号：</label>
+                <input  type="text">
+			</div>
+			<div class="list-item">
+                <label>管道名字：</label>
+                <input  type="text">
+            </div>
+			<div class="list-item">
+                <label>请选择智能合约：</label>
+                <select ng-model="selectChannel"  ng-options=" x.channelName as x.channelName for x in Channel">
+                </select>
+            </div>
+            <div class="list-item">
+                <p>初始化参数：</p>
+				<div class="list-second-item">
+					<label>参数1：</label>
+					<input  type="text">
+					<i class="icon icon-add p10" ng-click="addUpdate()">&nbsp;</i>
+					<span>增加参数</span>
+				</div>
+                <div class="list-second-item" ng-repeat="item in paramsListUpdate">
+                    <label>参数{{$index+2}}：</label>
+                    <input  type="text">
+                    <i class="icon icon-delete p10" ng-click="deleteUpdate($index)">&nbsp;</i>
+                </div>
+			</div>
+			<div class="list-item">
+                <label>背书策略：</label>
+				<input  type="text">
+				<i class="icon icon-problem p10" ng-mouseenter="showTipLayer()">&nbsp;</i>
+            </div>
+            <div class="alert-button">
+                <button class="open-resultLayer" ng-click="deploy()" type="submit" name="button">升级</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!--升级 end-->
+
+<!--结果显示 start-->
+<div class="deployResult deployResult-fail" id="deployResult-fail"><i class="fa fa-deployFail"></i>安装失败！</div>
+<div class="deployResult deployResult-success" id="deployResult-success"><i class="fa fa-deploySuccess"></i>安装成功！</div>
+<!--结果显示 end-->
+<!-- 提示浮层 start -->
+<tip id="expense-tip" style="display:none;"></tip>
+<!-- 提示浮层 end -->
+
+</body>
+</html>

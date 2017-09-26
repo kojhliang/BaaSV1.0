@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>网金BaaS平台管理后台</title>
+    <link rel="stylesheet"type="text/css" href="/style_main.css">
+    <script type="text/javascript" src="/jquery-1.12.4.min.js"></script>
+    <script src = "/angular.min.js"></script>
+    <script src = "/angular-sanitize.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $('.bg-icon').click(function () {
+                var parent = $(this).parents('.item');
+                parent.toggleClass('down');
+            });
+            $('.content a').click(function () {
+                $('.left-sidebar').find('a').removeClass('active');
+                $(this).addClass('active')
+            });
+            iframe();
+            $(window).resize(function(){
+                iframe();
+            });
+            $('.close').click(function(){
+                $(".alert-layer,.grey-background").hide();
+            });
+        });
+        function iframe(){
+            var wh=$(window).height();
+            $("#main_iframe").height(wh-80)
+        }
+    </script>
+</head>
+<body>
+<div class="header">
+    <div class="fixed">
+        <div class="logo"><img src="/logo.png" alt=""></div>
+        <!--<div class="user-info"><img src="/face.png" alt="">你好！</div>-->
+    </div>
+</div>
+<div class="main-body">
+    <div class="left-sidebar" id="navigation">
+        <div class="item down">
+            <div class="line"></div>
+            <div class="title"><i class="icon-left icon-1"></i><span>区块链信息</span><i class="bg-icon"></i></div>
+            <div class="content">
+                <ul>
+                    <li><a href="/blockquery" class="active" target="main_iframe">区块查询</a></li>
+                    <li><a href="/networkpeer" target="main_iframe">网络环境</a></li>
+                    <li><a href="/transactionquery"  target="main_iframe">交易记录</a></li>
+                    <li><a href="/statisgraph" target="main_iframe">统计图表</a></li>
+                </ul>
+            </div>
+        </div>
+	 <div class="item">
+            <div class="line"></div>
+               <div class="title"><i class="icon-left icon-2"></i><span>管道</span><i class="bg-icon"></i></div>
+            <div class="content">
+            <ul>
+            <li><a href="/channelManager" target="main_iframe">管道管理</a></li>
+            </ul>
+            </div>
+        </div>
+        <div class="item">
+            <div class="line"></div>
+               <div class="title"><i class="icon-left icon-2"></i><span>智能合约</span><i class="bg-icon"></i></div>
+            <div class="content">
+            <ul>
+            <li><a href="/chaincodeManager" target="main_iframe">合约管理</a></li>
+            <li><a href="/instanceManager" target="main_iframe">实例管理</a></li>
+            </ul>
+            </div>
+        </div>
+        <div class="item">
+            <div class="line"></div>
+            <div class="title"><i class="icon-left icon-2"></i><span>操作日志</span><i class="bg-icon"></i></div>
+            <div class="content">
+                <ul>
+                    <li><a href="/logCheck" target="main_iframe">日志查看</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="item">
+            <div class="line"></div>
+            <div class="title"><i class="icon-left icon-3"></i><span>帮助</span><i class="bg-icon"></i></div>
+            <div class="content">
+                <ul>
+                    <li><a href="/techSupport" target="main_iframe">技术支持</a></li>
+                    <li></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="main">
+        <iframe id ="main_iframe" name="main_iframe" frameborder="0" style="min-height:550px" width="100%" height="100%" scrolling="auto" src="/blockquery"></iframe>
+    </div>
+</div>
+<!--提示弹窗 start-->
+<div class="grey-background"></div>
+<div class="alert-layer tip-layer">
+    <a href="javascript:;" class="alert-close bg-icon close">×</a>
+    <h3 class="alert-title">
+        <span>提示</span>
+    </h3>
+    <div class="alert-content">
+        <div class="alert-text">
+            <span>该功能正在开发中，敬请期待。</span>
+        </div>
+        <div class="alert-button">
+            <input class="btn btn-confirm close" type="submit" name="button" value="确认">
+        </div>
+    </div>
+</div>
+
+<!--提示弹窗 end-->
+<!--正在加载弹窗 start-->
+<div class="alert-layer loading-layer">
+    <div class="alert-content">
+       <div class="img">
+           <img src="/loadingBig.gif" alt="loading">
+       </div>
+        <p>正在加载</p>
+    </div>
+</div>
+<!--正在加载弹窗 end-->
+</body>
+</html>

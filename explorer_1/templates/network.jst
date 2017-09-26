@@ -1,0 +1,141 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+	<header>
+
+     		<script src = "/Chart.min.js"></script>
+     		<script src = "/angular.min.js"></script>
+			<script src = "/angular-animate.min.js"></script>
+		<script src = "/socket.io.js"></script>
+		<script src = "/scripts.js"></script>
+     		 <script src="/d3.v2.js"></script>
+     		<script src="/jquery.min.js"></script>
+		<script src = "/angular-sanitize.min.js"></script>
+     		<link href="/Anton.css" rel="stylesheet">
+    <link href="/style_main.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="/style.css">
+		<link href="/dialog.css" rel="stylesheet" />
+		<title> 网金BaaS平台管理后台 </title>
+		<meta charset="utf-8">
+	  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<script>var ledgerData = ((=it.ledgerData));
+		var statsData = ((=it.statsData));
+		</script>
+		<script>
+			$(function(){
+				$('.click-close').click(function(){
+					$(".alert-layer,.grey-background").hide();
+				});
+				$('.layerOpenClick').click(function(){
+					$(".alert-layer,.grey-background").show();
+				});
+			})
+		</script>
+	</header>
+	<body ng-controller="NETWORK">
+
+	<div  class="menu-trigger" >
+		<button class="menu-button" id="button" ng-click="activate()"> Menu </button>
+	</div>
+
+	<div id="network" class="Network">
+		<a name="D"></a>
+
+		<div class="Block_title">
+			<h1><b><i class="fa fa-connectdevelop" aria-hidden="true"></i>&nbsp;网络信息</b>
+            <!--<p class="txt">连接此网络节点数量:  {{ info.peers.length}}</p>-->
+            </h1>
+
+		</div>
+			<p style="padding-left:30px;font-size:12px">连接此网络节点数量:  {{ info.peers.length}}</p>
+			<div class="Network_child">
+				<table>
+					<thead>
+						<tr>
+							<th> 名字 </th>
+							<th> 地址</th>
+							<th> 所属组织</th>
+							<th> 加入管道数</th>
+							<th> 状态</th>
+							<th colspan="2"> 操作</th>
+						</tr>
+					</thead>
+					<tbody>
+					 <tr ng-repeat="peers in info.peers " >
+							<td data-label="Name"> <i class="fa fa-chain" style="font-weight:bold;color:#00ff00" aria-hidden="true"></i>&nbsp;{{peers.PeerName}} </td>
+							<td data-label="Address"> {{peers.Ip }}  </td>
+							<td data-label="Type"> {{peers.orgName }} </td>
+							<td data-label="PKIID" class="peer-num"><i class="fa fa-info-circle" aria-hidden="true" ng-click="getChannelByPeerId(peers.pk_Id)" ></i>{{peers.count}}</td>
+							<td data-label="online"  ng-show={{peers.Online}} class="network-state"><i class="fa icon-online"></i>在线</td>
+							<td data-label="online"  ng-show={{!peers.Online}} class="network-state"><i class="fa icon-offline"></i>离线</td>
+						 	<td class="network-operate">
+								<span class="layerOpenClick" ng-click="controllerBtn(peers)" ng-show={{!peers.Online}}><i class="fa icon-start"></i>启动</span>
+                <span class="layerOpenClick" ng-click="controllerBtn(peers)" ng-show={{peers.Online}} ><i class="fa icon-pause"></i>停止</span>
+								<!--<span><i class="fa icon-log"></i>日志</span>-->
+							</td>
+					 </tr>
+					</tbody>
+				</table>
+			</div>
+	</div>
+  <!-- 跟随弹层 start -->
+	<dialog id="follow-dialog" style="display:none;" dialogtitle="加入管道列表"></dialog>
+  <!-- 跟随弹层 end -->
+	<!--遮罩层 start-->
+	<div class="grey-background"></div>
+	<!--遮罩层 end-->
+	<!--提示弹窗 start-->
+	<div class="grey-background"></div>
+	<div class="alert-layer deploy-general operate-layer">
+		<h3 class="alert-title">
+			<span>提示</span>
+			<a href="javascript:;" class="alert-close click-close">×</a>
+		</h3>
+		<div class="alert-content">
+			<div class="alert-text">
+				<span id="title"></span>
+			</div>
+			<div class="alert-button">
+				<button ng-click="vpNodeController()">确认</button>
+				<button class="btn-cancel click-close">取消</button>
+			</div>
+		</div>
+	</div>
+
+	<!--提示弹窗 end-->
+
+	<!--部署结果显示 start-->
+	<div class="deployResult deployResult-fail" id="deployResult-fail"><i class="fa fa-deployFail"></i><span class="msgClass"></span></div>
+	<div class="deployResult deployResult-success" id="deployResult-success"><i class="fa fa-deploySuccess"></i><span class="msgClass"></span></div>
+	<!--部署结果显示 end-->
+
+
+	<!--提示弹窗 end-->
+	<!--正在加载弹窗 start-->
+	<div class="loading-layer" style="display: none">
+		<div class="alert-content">
+			<div class="img">
+				<img src="/loadingBig.gif" alt="loading">
+			</div>
+			<p id="loadingMsg"></p>
+		</div>
+	</div>
+	<!--正在加载弹窗 end-->
+
+</body>
+
+
+</html>

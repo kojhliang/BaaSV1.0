@@ -1,0 +1,132 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+<header>
+    <script src="/jquery.min.js"></script>
+	<script src = "/Chart.min.js"></script>
+	<script src = "/angular.min.js"></script>
+	<script src = "/angular-animate.min.js"></script>
+	<script src = "/socket.io.js"></script>
+    <script src = "/angular-sanitize.min.js"></script>
+
+    <link href="/page.css" type="text/css" rel="stylesheet"/>
+    <script type="text/javascript" src="/page.js"></script>
+
+
+    <script src = "/scripts.js"></script>
+	<script src="/d3.v2.js"></script>
+    <script src = "/DatePicker/WdatePicker.js"></script>
+
+	<link href="/style_main.css" rel="stylesheet">
+	<link href="/Anton.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/style.css">
+	<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+
+
+	<title> 网金BaaS平台管理后台 </title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</header>
+
+<body ng-controller="CHAINCODE_LOG">
+
+<div class="Block_container smartContract smartContract-v2" >
+    <div class="Block_item block-top">
+        <div class="Block_title">
+            <h1><i class="fa fa-logFinder"></i><b>查询条件</b></h1>
+        </div>
+        <div class="logCheck-header">
+            <div class="conditions">
+                <ul class="clearfix">
+                    <li>
+                        <label>开始时间:</label><input id="startDate" type="text" onfocus="WdatePicker()" class="date" />
+                    </li>
+                    <li>
+                        <label>结束时间:</label><input id="endDate" type="text" onfocus="WdatePicker()" class="date" />
+                    </li>
+                    <li>
+                        <label>用户:</label><input type="text" />
+                    </li>
+                    <li>
+                        <label>操作:</label><!--
+                        --><select id="operation" class="select-box">
+                            <option value="">-----请选择-----</option>
+                            <option value="部署">-----部署------</option>
+                            <option value="执行">-----执行------</option>
+                        </select>
+                    </li>
+                    <li>
+                        <label>传入参数:</label><input type="text" />
+                    </li>
+                    <li>
+                        <label>事务ID:</label><input id="transactionId" type="text" />
+                    </li>
+                    <!--
+                    <li>
+                        <label>链码ID:</label><input id="chaincodeId" type="text">
+                    </li>
+                     -->
+                </ul>
+            </div>
+            <div class="button-box"><button  ng-click="search()"><i class="fa fa-logFinder-white"></i>查询</button></div>
+        </div>
+    </div>
+	<div class="Block_item block-bottom logCheck">
+        <div class="Block_title">
+            <h1><i class="fa fa-logCheck"></i><b>日志查看</b></h1>
+		</div>
+		<div class="detail-table">
+			<table>
+				<tr class="detail-title">
+					<td class="title-1">ID</td>
+					<td class="title-2">时间</td>
+					<!--<td>用户</td>-->
+					<td class="title-3">操作</td>
+					<td class="title-4">链码ID</td>
+                    <td class="title-2">事务ID</td>
+                    <td class="title-2">所属管道</td>
+					<td  class="title-2">传入参数</td>
+				</tr>
+                <tr class="detail-content" ng-repeat="data in datas ">
+
+                <td class="content-1">{{data.pk_Id}}</td>
+                <td class="content-2">{{data.createTime | date : 'yyyy-MM-dd HH:mm:ss'}}</td>
+                <!--<td>jim</td>-->
+                <td class="content-3">{{data.operation}}</td>
+                <td class="content-4">{{data.chaincodeId}}</td>
+                <td class="content-2">{{data.transactionId}}</td>
+                <td class="content-2">ooAED1</td>
+                <td class="content-2" ng-bind-html="data.params |trustHtml"></td>
+                </tr>
+                <tr class="detail-pagination">
+                    <td colspan="7">
+                        <div class="pagination">
+                            <div>
+                                <ul class="page" maxshowpageitem="3" pagelistcount="10"  id="page"></ul>
+                                <ul class="page page-total">
+                                    <li class="pageItemDisable">共{{pageCount}}条记录，共{{totalPage}}页</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+			</table>
+		</div>
+	</div>
+</div>
+
+
+</body>
+</html>

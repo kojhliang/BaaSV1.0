@@ -1,0 +1,8 @@
+./explorer_1/webcontent/dynamic
+./app-network/node_modules/
+./explorer_1/node_modules/
+*.bak
+**/.idea/
+**/node_modules/
+/explorer_1/webcontent/dynamic/
+!/explorer_1/webcontent/dynamic/index.js

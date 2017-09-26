@@ -1,0 +1,114 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+	http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+<header>
+	<script src = "/Chart.min.js"></script>
+	<script src = "/angular.min.js"></script>
+	<script src = "/angular-animate.min.js"></script>
+	<script src = "/socket.io.js"></script>
+	<script src = "/scripts.js"></script>
+	<script src="/d3.v2.js"></script>
+	<script src="/jquery.min.js"></script>
+	<link href="/style_main.css" rel="stylesheet">
+	<link href="/Anton.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/style.css">
+	<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+	<title> Hyperledger Explorer </title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<div id="header" class="Header" ng-controller="HEADER">
+		<h1><i class="fa fa-connectdevelop" aria-hidden="true"></i>&nbsp;Hyperledger Explorer </h1>
+	</div>
+</header
+><body>
+<div class="Block_container">
+	<div class="Block_item techSupport block-top">
+		<div class="Block_title">
+			<h1><i class="fa fa-frequentQ"></i><b>常见问题</b></h1>
+		</div>
+		<div class="new_content">
+			<ul class="clearfix">
+				<li>
+					<p class="li-title">
+						①&nbsp;&nbsp;BaaS管理后台浏览器支持
+					</p>
+					<p class="li-text">
+						不支持IE内核浏览器，如qq浏览器，360浏览器。支持Chrome，firefox等非IE内核浏览器
+					</p>
+				</li>
+				<li>
+					<p class="li-title">
+						②&nbsp;&nbsp;使用网金BaaS平台的费用是怎么计算的？
+					</p>
+					<p class="li-text">
+						用户需支付的费用主要分两部分，一部分费用是依据青云 QingCloud平台的要求，用户需向青云 QingCloud平台支付构建区块链环境时用户使用青云的基础资源（包含但不限于容器、虚拟机、网络等青云资源）所产生的费用，如对该部分费用有任何疑问，用户应向青云 QingCloud平台客服咨询；另一部分费用是用户使用网金BaaS平台服务所产生的费用。关于第二部分费用，目前网金BaaS平台应用分为基础版和定制版两个版本，当前的为基础版，主要针对个人用户和不需要个性化定制的企业，无需收费，能实现区块链环境自动构建，智能合约快速部署，测试执行等操作。定制版是根据企业需求提供定制化服务，具备灵活部署，较基础版更优秀的扩展性，安全性以及业务处理能力，具体事宜可联系我司商务洽谈。
+					</p>
+				</li>
+				<li >
+					<p class="li-title">
+						③&nbsp;&nbsp;青云工单系统
+					</p>
+					<p class="li-text">
+						如遇青云云平台服务器资源或其他硬件资源的相关问题，请向青云提交工单。<br>
+						工单提交地址：<br>
+						<a href="https://console.qingcloud.com/tickets/" target="_blank">https://console.qingcloud.com/tickets/</a>
+					</p>
+				</li>
+			</ul>
+		</div>
+	</div>
+	<div class="Block_item techSupport block-bottom">
+		<div class="Block_title">
+			<h1><i class="fa fa-contact"></i><b>联系我们</b></h1>
+		</div>
+		<div class="new_content">
+			<ul class="clearfix">
+				<li>
+					<img src="./doubt.png" alt="doubt">
+					<p class="li-title">技术疑问</p>
+					<p class="li-text">
+						梁敏鸿 <br>
+						手机：18928730318 <br>
+						邮箱：liang.minhong@ucsmy.com
+					</p>
+				</li>
+				<li>
+					<img src="./phone.png" alt="doubt">
+					<p class="li-title">商务合作</p>
+					<p class="li-text">
+						杨明  <br>
+						手机：18928990086 <br>
+						邮箱：yang.ming@ucsmy.com
+					</p>
+				</li>
+				<li>
+					<img src="./message.png" alt="doubt">
+					<p class="li-title">交流讨论</p>
+					<p class="li-text">
+						网金BaaS平台讨论群 <br>
+						519329163<br>
+					</p>
+				</li>
+				<li>
+					<img src="./address.png" alt="doubt">
+					<p class="li-title">官网地址</p>
+					<p class="li-text">
+						广东网金控股股份有限公司 <br>
+						<a href="http://www.ucsmy.com" target="_blank">www.ucsmy.com</a> <br>
+					</p>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>
+</body>
+</html>

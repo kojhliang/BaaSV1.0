@@ -1,0 +1,115 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+	<header>
+
+     		<script src = "/Chart.min.js"></script>
+     		<script src = "/angular.min.js"></script>
+			<script src = "/angular-animate.min.js"></script>
+		<script src = "/socket.io.js"></script>
+		<script src = "/scripts.js"></script>
+     		 <script src="/d3.v2.js"></script>
+     		<script src="/jquery.min.js"></script>
+		<script src = "/angular-sanitize.min.js"></script>
+     		<link href="/Anton.css" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="/style.css">
+		<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+		<title> 网金BaaS平台管理后台 </title>
+		<meta charset="utf-8">
+	  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<script>var ledgerData = ((=it.ledgerData));
+		var statsData = ((=it.statsData));
+		</script>
+	</header
+
+><body>
+
+	<div  class="menu-trigger" ng-controller="TRIGGER" >
+		<button class="menu-button" id="button" ng-click="activate()"> Menu </button>
+	</div>
+
+
+
+
+	<div id="block"  ng-controller="BLOCKS">
+
+	</div>
+
+	<div id="current" class="Current" ng-controller="CURRENT" style="display:none">
+	</div>
+
+	<div id="trans" class="Trans" ng-controller="TRANSACTIONS">
+		<a name="F"></a>
+			<div class="Block_title">
+				<h1><b><i class="fa fa-arrows-alt" aria-hidden="true"></i>&nbsp;最新交易列表</b></h1>
+				<div class="select-channel">
+					<label>请选择管道：</label>
+					<select ng-model="selectChannel" ng-change="changeChannel(selectChannel)" ng-options=" x.channelName as x.channelName for x in Channel">
+					</select>
+				</div>
+				<span> 显示的交易个数: <input type="number" step="1", min="1", max="{{trans.length}}", ng-model="row_amount2"/></span>
+			</div>
+
+			<!--<div class="Loading_symbol" ng-show="loader.loading">Loading..</div>-->
+					<table>
+						<thead>
+							<tr>
+								<th> 交易所在区块 </th>
+								<th> 交易发起组织</th>
+								<th> 时间</th>
+								<th> 管道 </th>
+								<th> 交易UUID </th>
+								<th> 详细信息 </th>
+							</tr>
+						</thead>
+						<tbody ng-repeat="items in trans | limitTo: row_amount2 ">
+							<tr ng-repeat="each in items.data.data | orderBy:-$index" class="{{ trans[$index].cssClass }}">
+								<td data-label="Block# Origin">{{ $parent.$index }}</td>
+								<td data-label="Seconds">{{ each.payload.data.actions[0].header.creator.Mspid }}</td>
+								<td data-label="Nanos">{{each.payload.header.channel_header.timestamp}} </td>
+								<td data-label="ID">{{each.payload.header.channel_header.channel_id | limitTo : 13}}...</td>
+								<td data-label="UUID">{{ each.payload.header.channel_header.tx_id | limitTo : 13}}...</td>
+								<td data-label="Details">
+									<button ng-click="Update_transaction_selection_index($parent.$index, $index)"> 展开 </button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					  <form action='#openModal3' id="change3" style="display:none">
+										<input type="submit" value="Full Details">
+									</form>
+					<div id="openModal3" class="modalDialog {{showLayer?'open-layer':''}}" style="font-size: 120%; text-align:left;">
+											<div>
+                                            <a href="#close" title="Close" class="close" ng-click="closeLayer()">X</a>
+                                            <h2 class="modalDialog-title">交易信息</h2>
+                                            <div class="content"><div>
+												<p> <b>类型:</b> {{transs.payload.header.channel_header.type }}</p>
+												<p> <b>交易UUID:</b> {{ transs.payload.header.channel_header.tx_id }} </p>
+												<p> <b>日期: </b> {{ transs.payload.header.channel_header.timestamp }} </p>
+												<p> <b>管道:</b> {{ transs.payload.header.channel_header.channel_id}} </p>
+												<p> <b>交易发起组织:</b> {{ transs.payload.header.signature_header.creator.Mspid}} </p>
+												<p> <b>数据加载:</b> {{ transs.payload.data.actions[0].payload.action.proposal_response_payload.extension }} </p>
+												<p> <b>签名:</b> {{ transs.payload.data.actions[0].payload.action.endorsements }} </p>
+														
+													</div></div>
+											</div>
+										</div>
+			</div>
+		</div>
+
+	</div>
+</body>
+
+</html>

@@ -1,0 +1,130 @@
+/*跟随弹层*/
+.ucs-dialog{
+  position:absolute;
+  top:0;
+  left:0;
+  background:#fff;
+  box-shadow: 2px 2px 12px #888;
+  z-index:1000;
+  min-width:340px;
+}
+
+.dialog-title{
+  position:relative;
+  height:44px;
+  line-height: 44px;
+  font-size:16px;
+  color:#2593ef;
+  border-bottom:1px solid #a1a9b5;
+  padding-left:12px;
+}
+
+.dialog-title .little-title{
+  padding-left:20px;
+  font-size: 14px;
+  color:#333;
+}
+
+.dialog-close-btn{
+  position:absolute;
+  right:2px;
+  top:15px;
+  width:24px;
+  height:24px;
+  font-size:14px;
+  color:#2593ef;
+}
+
+.peer-list-wrap{
+  padding: 10px 16px 10px 16px;
+}
+
+.peer-list{
+  width:100%;
+  border:1px solid #dcdcdc;
+}
+
+table.peer-list tr:nth-child(even){
+  background:#fff;
+}
+
+table.peer-list tr:nth-child(odd){
+  background:#f5f9fc;
+}
+
+.dialog-tip{
+  position:absolute;
+  top:-5px;
+  left: 20px;
+  width:10px;
+  height:10px;
+  background: #fff;
+  transform:rotate(135deg);
+  box-shadow: -1px 1px 7px rgba(136, 136, 136, 0.44);
+}
+
+.dialog-tip-cover{
+  position:absolute;
+  top:0;
+  left:16px;
+  width:20px;
+  height:8px;
+  background: #fff;
+}
+
+/*提示浮层*/
+.ucs-tip{
+  position:absolute;
+  top:0;
+  left:0;
+  width:125px;
+  box-sizing: border-box;
+  background:#4098e2;
+  color:#fff;
+  box-shadow: 2px 2px 12px #888;
+  z-index:1000;
+  opacity:0.7;
+}
+
+.tip-title{
+  position:relative;
+  height:20px;
+}
+
+
+.tip-close-btn{
+  position: absolute;
+  top: 50%;
+  margin-top: -6px;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  display: block;
+  font-size: 14px;
+  color: #fff;
+}
+
+.tip-detail-wrap{
+  padding: 10px;
+}
+
+
+.tip-point{
+  position:absolute;
+  top:-5px;
+  left: 20px;
+  width:10px;
+  height:10px;
+  background: #4098e2;
+  transform:rotate(135deg);
+  box-shadow: -1px 1px 7px rgba(136, 136, 136, 0.44);
+}
+
+.tip-point-cover{
+  position:absolute;
+  top:0;
+  left:16px;
+  width:20px;
+  height:8px;
+  background: #4098e2;
+}

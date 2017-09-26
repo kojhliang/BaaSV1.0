@@ -1,0 +1,50 @@
+{
+	"network-config": {
+		"orderer": {
+		
+		"url": "grpcs://192.168.0.10:7050",
+		
+			
+			"server-hostname": "orderer.bbb.com",
+			"tls_cacerts": "../new_artifacts/channel/crypto-config/ordererOrganizations/bbb.com/orderers/orderer.bbb.com/tls/ca.crt"
+		},
+		"orgaaa": {
+			"name": "peerOrgaaa",
+			"mspid": "OrgaaaMSP",
+			
+			"ca": "https://192.168.0.9:7054",
+			
+			"peers": {
+			
+			
+			"peer2": {
+					"requests": "grpcs://192.168.0.6:7051",
+					"events": "grpcs://192.168.0.6:7053",
+					
+					"server-hostname": "peer1.orgaaa.bbb.com",
+					"tls_cacerts": "../new_artifacts/channel/crypto-config/peerOrganizations/orgaaa.bbb.com/peers/peer1.orgaaa.bbb.com/tls/ca.crt"
+					
+				},
+			
+			
+			
+			"peer1": {
+					"requests": "grpcs://192.168.0.11:7051",
+					"events": "grpcs://192.168.0.11:7053",
+					
+					"server-hostname": "peer0.orgaaa.bbb.com",
+					"tls_cacerts": "../new_artifacts/channel/crypto-config/peerOrganizations/orgaaa.bbb.com/peers/peer0.orgaaa.bbb.com/tls/ca.crt"
+					
+				},
+			
+			
+			"enpty":{}
+				
+			},
+			"admin": {
+				"key": "../new_artifacts/channel/crypto-config/peerOrganizations/orgaaa.bbb.com/users/Admin@orgaaa.bbb.com/msp/keystore",
+				"cert": "../new_artifacts/channel/crypto-config/peerOrganizations/orgaaa.bbb.com/users/Admin@orgaaa.bbb.com/msp/signcerts"
+			}
+		}
+	}
+}

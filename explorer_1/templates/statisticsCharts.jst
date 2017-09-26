@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en" ng-app=explorer>
+<head >
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Title</title>
+    <link rel="stylesheet" href="/style_main.css">
+    <link rel="stylesheet" href="/style.css">
+    <script src = "/Chart.min.js"></script>
+    <script src = "/angular.min.js"></script>
+    <script src = "/angular-animate.min.js"></script>  
+     <script src = "/scripts.js"></script>
+     <script src="/jquery.min.js"></script>
+    <script src = "/angular-sanitize.min.js"></script>
+    <script>var ledgerData = ((=it.ledgerData));
+		var statsData = ((=it.statsData));
+    </script>
+      
+</head>
+<body>
+<div class="echarts-container">
+    <div class="e-charts" >
+        <div class="title icon-1">
+            <span>可视化图表</span>
+            <div class="select-channel">
+                <label>请选择管道：</label>
+                <select>
+                    <option>Mychannel1</option>
+                    <option>Mychannel1</option>
+                    <option>Mychannel1</option>
+                    <option>Mychannel1</option>
+                    <option>Mychannel1</option>
+                </select>
+            </div>
+        </div>
+        <div class="clearfix">
+            <div id="graph" ng-controller="GRAPH" class="box">
+                <div class="title icon-2"><span>性能</span></div>
+                <div class="list">
+                    <ul>
+                        <li>时间:<span>{{ checkTime }}</span></li>
+                        <li>交易平均延迟时间:<span>{{ avgTxnLatency }} ms</span></li>
+                        <li>交易速度:<span>{{ txnRate }} 个/秒</span></li>
+                        <li>挖矿速度:<span>{{ mineRate }} 区块/秒</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="box" ng-controller="TX_RATE_NEW"  ng-mouseover="focus=true;" ng-mouseout="checkChg();">
+                <div class="title icon-3"><span>交易速度 </span></div>
+                <div class="charts" id="tx_rate"></div>
+            </div>
+            <div class="box"  ng-controller="BLK_RATE_NEW">
+                <div class="title icon-3"><span>出块率</span></div>
+                <div class="charts" id="blk_rate"></div>
+            </div>
+            <div class="box" ng-controller="BLK_TX_NEW">
+                <div class="title icon-4"><span>每个区块的交易数量</span></div>
+                <div class="charts" id="blk_tx"></div>
+            </div>
+            <div class="box" style="display:none">
+                <div class="title icon-5"><span>每个链码的交易数量</span></div>
+                <div class="charts" id="per"></div>
+            </div>
+            <div class="box" style="display:none">
+                <div class="title icon-5"><span>接受/拒绝 交易统计</span></div>
+                <div class="charts" id="per2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="/echarts.common.min.js"></script>
+<script type="text/javascript">
+  
+
+    
+
+  
+
+    var per=echarts.init(document.getElementById('per'));
+    var perOption={
+        tooltip: {
+        },
+        color:['#3c9bf0','#6ec71e','#f56e6a'],
+        legend: {
+            orient: 'vertical',
+            x: 'right',
+            data:['ch01','ch02','ch03']
+        },
+        grid: {
+            left: '40px',
+            right: '40px',
+            top: '40px',
+            bottom: '30px'
+        },
+        series: [
+            {
+                name:'Transactions per Block',
+                type:'pie',
+                radius: ['65%', '80%'],
+                avoidLabelOverlap: false,
+              
+                data:[
+                    {value:335, name:'ch01'},
+                    {value:310, name:'ch02'},
+                    {value:234, name:'ch03'}
+                ]
+            }
+        ]
+    };
+    per.setOption(perOption);
+
+    var per2=echarts.init(document.getElementById('per2'));
+    var per2Option={
+        tooltip: {
+         
+        },
+        color:['#3c9bf0','#6ec71e','#f56e6a'],
+        legend: {
+            orient: 'vertical',
+            x: 'right',
+            data:['ch01','ch02','ch03']
+        },
+        grid: {
+            left: '40px',
+            right: '40px',
+            top: '40px',
+            bottom: '30px'
+        },
+        series: [
+            {
+                name:'Transactions per Block',
+                type:'pie',
+                radius: ['65%', '80%'],
+                avoidLabelOverlap: false,
+         
+                data:[
+                    {value:135, name:'ch01'},
+                    {value:310, name:'ch02'},
+                    {value:534, name:'ch03'}
+                ]
+            }
+        ]
+    };
+    per2.setOption(per2Option);
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+	<header>
+
+     		<script src = "/Chart.min.js"></script>
+     		<script src = "/angular.min.js"></script>
+			<script src = "/angular-animate.min.js"></script>
+		<script src = "/socket.io.js"></script>
+		<script src = "/scripts.js"></script>
+     		 <script src="/d3.v2.js"></script>
+     		<script src="/jquery.min.js"></script>
+        <script src = "/angular-sanitize.min.js"></script>
+     		<link href="/Anton.css" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="/style.css">
+		<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+		<title> 网金BaaS平台管理后台 </title>
+		<meta charset="utf-8">
+	  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<script>var ledgerData = ((=it.ledgerData));
+		var statsData = ((=it.statsData));
+		</script>
+	</header
+
+<body onresize="restore()">
+
+	<div  class="menu-trigger" ng-controller="TRIGGER" >
+		<button class="menu-button" id="button" ng-click="activate()"> Menu </button>
+	</div>
+
+	<div id="graph" class="Graph" onmouseover="lock();" onmouseout="redraw();">
+		<a name="E"></a>
+		<div class="Block_title">
+			<h1><b><i class="fa fa-dashboard" aria-hidden="true"></i>&nbsp;可视化图表</b></h1>
+		</div>
+				<div style="width:100%">
+				<div id="performance" class="Performance" ng-controller="GRAPH" style="padding-bottom:80px;">
+					<div id="top" class="Top" style="margin-left:0px">
+						<h2> <i class="fa fa-wpforms" aria-hidden="true"></i>&nbsp;性能</h2>
+					</div>
+					<table class="PerfData">
+                        <tr class="none">
+												  <td class="param">时间</td><td class="val">{{ checkTime }}</td>
+												</tr>
+												<tr class="none">
+                        <td class="param">交易平均延迟时间</td><td class="val">{{ avgTxnLatency }}<span class="measure">ms</span>
+                        <i class="fa fa-arrow-up" style="color:#ff3300;" aria-hidden="true" ng-if="avgTxnLatencySc > 0"></i>
+                        <i class="fa fa-arrow-down" style="color:#00ff00;" aria-hidden="true" ng-if="avgTxnLatencySc < 0"></i>
+                        <i class="fa fa-minus" style="color:#3399ff;" aria-hidden="true" ng-if="avgTxnLatencySc == 0"></i>
+                        </td>
+                        </tr>
+                        <tr class="none">
+                        <td class="param">交易速度</td><td class="val">{{ txnRate }} <span class="measure">/sec</span>
+                        <i class="fa fa-arrow-up" style="color:#00ff00; " aria-hidden="true" ng-if="txnRateSc > 0"></i>
+                        <i class="fa fa-arrow-down" style="color:#ff3300; " aria-hidden="true" ng-if="txnRateSc < 0"></i>
+                        <i class="fa fa-minus" style="color:#3399ff; " aria-hidden="true" ng-if="txnRateSc == 0"></i>
+                        </td>
+                        </tr>
+                        <tr class="none">
+                        <td class="param">挖矿速度 </td><td class="val"> {{ mineRate }}<span class="measure">blocks/sec</span>
+                        <i class="fa fa-arrow-up" style="color:#00ff00; " aria-hidden="true" ng-if="mineRateSc > 0"></i>
+                        <i class="fa fa-arrow-down" style="color:#ff3300; " aria-hidden="true" ng-if="mineRateSc < 0"></i>
+                        <i class="fa fa-minus" style="color:#3399ff; " aria-hidden="true" ng-if="mineRateSc == 0"></i>
+                        </td>
+                        </tr>
+					</table>
+				</div>
+
+				<!--div id="chaincode" class="Chaincode">
+					<div id="top" class="Top">
+						<h2> 链码 </h2>
+					</div>
+						<p style="padding-left:5%"> 交易类型 </b>
+						    <select name="mySelect" id="mySelect"
+						      ng-options="option.name for option in data.Options track by option.id"
+						      ng-model="data.selected"></select>
+						      	<bars-chart chart-data="data_1" ></bars-chart>
+						</p>
+
+				</div-->
+
+				<!--div id="volume" class="Volume">
+					<div id="top" class="Top">
+						<h2> Volume </h2>
+					</div>
+						<p style="padding-left:5%"> Transaction<b> LOAD </b>
+							<select name="mySelect" id="mySelect"
+						      ng-options="option.name for option in data2.Options track by option.id"
+						      ng-model="data2.selected"></select>
+								 <bars-chart chart-data="data_2" ></bars-chart>
+						</p>
+				</div-->
+
+				<div id="tx_rate_cont" ng-controller="TX_RATE" ng-mouseover="focus=true;" ng-mouseout="checkChg();">
+					<div id="top" class="Top">
+						<h2> <i class="fa fa-line-chart" aria-hidden="true"></i>&nbsp;交易速度 </h2>
+					</div>
+						     <canvas id="tx_rate"></canvas>
+				</div>
+
+				<div id="blk_rate_cont" ng-controller="BLK_RATE">
+                    <div id="top" class="Top">
+                        <h2> <i class="fa fa-line-chart" aria-hidden="true"></i>&nbsp;出块率 </h2>
+                    </div>
+                             <canvas id="blk_rate"></canvas>
+                </div>
+                </div>
+                <div style="width:100%">
+                <div id="blk_tx_cont"  class="Performance" ng-controller="BLK_TX">
+                    <div id="top" class="Top">
+                        <h2> <i class="fa fa-bar-chart" aria-hidden="true"></i>&nbsp;每个区块的交易数量</h2>
+                    </div>
+                             <canvas id="blk_tx"></canvas>
+                </div>
+
+                <div id="ch_tx_cont"  class="Performance" ng-controller="CH_TX">
+                    <div id="top" class="Top">
+                        <h2> <i class="fa fa-pie-chart" aria-hidden="true"></i>&nbsp;每个链码的交易数量</h2>
+                    </div><br/>
+                             <canvas id="ch_tx"></canvas>
+                </div>
+
+                 <div id="appr_tx_cont"  class="Performance" ng-controller="APPR_TX">
+                    <div id="top" class="Top">
+                        <h2> <i class="fa fa-pie-chart" aria-hidden="true"></i>&nbsp;接收/拒绝 交易统计</h2>
+                    </div><br/>
+                             <canvas id="appr_tx"></canvas>
+                </div>
+
+				<!--div id="graph2" class="Graph2" ng-controller="BAR_GRAPH">
+					<div id="top" class="Top">
+						<h2> Graph#3 </h2>
+					</div>
+						<svg id="bar_graph"> </svg>
+				</div-->
+				</div>
+	</div>
+
+
+
+</body>
+
+
+</html>

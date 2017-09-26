@@ -1,0 +1,253 @@
+<!-- Copyright DTCC 2016 All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<!doctype html>
+<html lang="en" ng-app=explorer>
+<header>
+    <script src="/jquery.min.js"></script>
+	<script src = "/Chart.min.js"></script>
+	<script src = "/angular.min.js"></script>
+	<script src = "/angular-animate.min.js"></script>
+	<script src = "/socket.io.js"></script>
+    <script src = "/angular-sanitize.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="/uploadifive.css"/>
+    <script type="text/javascript" src="/jquery.uploadifive.js"></script>
+
+
+
+    <link href="/page.css" type="text/css" rel="stylesheet"/>
+    <script type="text/javascript" src="/page.js"></script>
+
+
+    <script src = "/scripts.js"></script>
+	<script src="/d3.v2.js"></script>
+
+	<link href="/style_main.css" rel="stylesheet">
+	<link href="/Anton.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="/style.css">
+	<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">
+	<title> 网金BaaS平台管理后台 </title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</header>
+
+<body ng-controller="CHAINCODE_DEPLOY">
+
+<div class="Block_container smartContract smartContract-v2" >
+	<div class="Block_item block-top">
+        <div class="Block_title">
+            <h1><i class="fa fa-deploy2"></i><b>部署合约</b></h1>
+            <button class="uploadStyle btn-uploadContract"><i class="fa fa-uploadContract"></i>上传智能合约</button>
+
+		</div>
+		<div class="detail-table">
+			<table>
+				<tr class="detail-title">
+					<td class="title-1">合约名字</td>
+					<td class="title-2">类型</td>
+					<td class="title-3">描述</td>
+					<td class="title-4">操作</td>
+				</tr>
+                <tr ng-repeat="data in datas " class="detail-content" >
+
+                <td class="content-1">{{data.Name}}</td>
+                <td class="content-2" ng-show="data.ChaincodeType=='example2'">平台提供</td>
+                <td class="content-2" ng-show="data.ChaincodeType=='map'">平台提供</td>
+                <td class="content-2" ng-show="data.ChaincodeType=='userUpload'">用户上传</td>
+                <td> {{data.Description}}</td>
+                <td>
+                    <button class="deployClick11" ng-click="deployClick(data)">部署</button>
+                </td>
+                </tr>
+                <tr class="detail-pagination">
+                    <td colspan="4">
+                        <div class="pagination">
+                            <div class="page-box">
+                                <ul class="page" maxshowpageitem="3" pagelistcount="10" id="page">
+                                </ul>
+                                <ul class="page page-total">
+                                    <li class="pageItemDisable">共{{pageCount}}条记录，共{{totalPage}}页</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+			</table>
+		</div>
+		<div class="detail-notice">
+			注意：不同的初始化参数将产生不同的智能合约。
+		</div>
+	</div>
+</div>
+<!--上传智能合约弹窗 start-->
+<div class="grey-background"></div>
+<div class="alert-layer deploy-general uploadContract-layer">
+    <h3 class="alert-title">
+        <span>上传智能合约</span>
+        <a href="javascript:;" class="alert-close click-close" id="upload-close">×</a>
+    </h3>
+    <div class="alert-content">
+        <form method="post" enctype="multipart/form-data" id="form">
+            <div class="alert-text">
+                <div class="input-item">
+                    <label>合约名字：</label>
+                    <input type="text" name="name">
+                </div>
+                <div class="input-item mt25">
+                    <label>描&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;述：</label>
+                    <textarea cols="30" rows="10" name="description"></textarea>
+                </div>
+                <div class="uploadFileArea">
+                    <div class="uploadFileAreaBox" id="uploadFileArea">
+                        <i class="fa fa-uploadPackage"></i>
+                        <span class="uploadFileName"><b id="fileName">网金决策方案管理系统. ZIP</b><span class="uploadFileSize"></span></span>
+                        <i class="fa fa-uploadFileDelete" id="deleleUploadFile"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="footer clearfix">
+                <div class="uploadButton">
+                    <span class="uploadButtonStyle">
+                        <i class="fa fa-upload-add"></i>
+                        添加文件
+                    </span>
+                    <input type="file" name="file" id="uploadFile">
+                </div>
+                <span class="uploadFormat">( 请上传zip，tar.gz，go格式文件 )</span>
+                <button class="uploadStyle startUpload" id="startUploadBtn"><i class="fa fa-uploadContract"></i>开始上传</button>
+                <button class="uploadStyle disabledStyle" id="disabledUploadBtn"><i class="fa fa-uploadingIcon"></i>上传中..</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!--上传智能合约弹窗 end-->
+
+<div class="grey-background2"></div>
+<!--上传和部署结果弹窗 start-->
+<div class="alert-layer result-layer">
+    <div class="alert-content">
+        <!--上传和部署成功提示-->
+        <div id="resultSuccess" >
+            <h3>
+                <i class="fa fa-result-success"></i>
+                <span id="resultSuccessSpan">上传成功！</span>
+            </h3>
+        </div>
+        <!--上传和部署失败提示-->
+        <div id="resultFail">
+            <h3>
+                <i class="fa fa-result-fail"></i>
+                <span id="resultFailSpan">上传失败！</span>
+            </h3>
+            <p>原因：<span id="retMsg"></span></p>
+        </div>
+        <div class="alert-button">
+            <button class="result-close" type="submit" name="button" data-action=".result-layer, .grey-background2">确认</button>
+        </div>
+    </div>
+</div>
+<!--上传和部署结果弹窗 end-->
+
+<!--部署弹窗 start-->
+<div class="alert-layer deploy-general deploy-layer">
+    <h3 class="alert-title">
+        <!--<span> 部署智能合约——证据链（用户）</span>-->
+        <!--<span> 部署智能合约——转账示例（平台）</span>-->
+        <span>部署智能合约——{{deployTitle}}</span>
+        <a href="javascript:;" id="deployWinClose" class="alert-close click-close">×</a>
+    </h3>
+    <div class="alert-content">
+        <div class="content-top">
+            <div class="list-item">
+                <label>实例名：</label>
+                <input ng-model="chaincodeName" type="text">
+            </div>
+            <!--部署智能合约——证据链（用户）-->
+            <div id="userUplad_params">
+                <div class="list-item">
+                    <label>初始化参数：</label>
+                    <span>（参数个数需要和合约所需参数一致）</span>
+                </div>
+                <div class="list-item last-item">
+                    <ul>
+                        <li>
+                            <label>参数1：</label>
+                            <input ng-model="userInput1" type="text">
+                            <span class="add-button" ng-click="add()">
+                                <i class="fa fa-add-params"></i>
+                                增加参数
+                            </span>
+                        </li>
+                        <li ng-repeat="item in paramsList">
+                            <label>参数{{$index+2}}：</label>
+                            <input ng-model="$parent.conf[$index]" type="text" >
+                            <span class="add-button" ng-click="delete($index)">
+                                <i class="fa fa-delete-params"></i>
+                                增加参数
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!--部署智能合约——转账示例（平台）-->
+            <div id="example2_params">
+                <div class="list-item">
+                    <table class="param-group-1">
+                        <tr>
+                            <td rowspan="2" width="104px" align="right">初始化参数：</td>
+                            <td>用户1信息：</td>
+                            <td align="right">名字：<input ng-model="user1" type="text"></td>
+                            <td align="right">账户余额：<input ng-model="user1money" type="text"></td>
+                        </tr>
+                        <tr>
+                            <td>用户2信息：</td>
+                            <td align="right">名字：<input ng-model="user2" type="text"></td>
+                            <td align="right"> 账户余额：<input ng-model="user2money" type="text"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <!--部署智能合约——通用数据存储示例（平台）-->
+            <div id="map_params">
+                <div class="list-item">
+                    <table class="param-group-2">
+                        <tr>
+                            <td width="104px" align="right">初始化参数：</td>
+                            <td><span>key:</span><input ng-model="mapKey" type="text"></td>
+                            <td align="right"><span>value：</span><input ng-model="mapValue" type="text"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="alert-button">
+                <button class="open-resultLayer" ng-click="deploy()" type="submit" name="button">部署</button>
+                <button class="disabledStyle" type="submit" name="button"><i class="fa fa-uploadingIcon"></i>部署中..</button>
+            </div>
+        </div>
+        <div class="content-bottom smartContract">
+            <div class="Block_title"><h1><i class="fa fa-deploy"></i><b>显示 API 详细信息</b></h1></div>
+            <div class="new_content">
+                <div class="detail"><p><span id="logMsg"></span></p></div>
+        </div>
+
+    </div>
+</div>
+<!--部署弹窗 end-->
+
+<!--部署结果显示 start-->
+<div class="deployResult deployResult-fail" id="deployResult-fail"><i class="fa fa-deployFail"></i>部署失败！</div>
+<div class="deployResult deployResult-success" id="deployResult-success"><i class="fa fa-deploySuccess"></i>部署成功！</div>
+<!--部署结果显示 end-->
+</div>
+</body>
+</html>

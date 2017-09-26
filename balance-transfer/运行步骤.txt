@@ -1,0 +1,13 @@
+需要准备的工作：
+1.npm install dockerode
+2.本地环境的区块链环境要开2375端口。
+
+开放2375端口
+vi /lib/systemd/system/docker.service
+在ExecStart添加
+
+-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock
+
+然后
+systemctl daemon-reload
+systemctl restart docker.service
