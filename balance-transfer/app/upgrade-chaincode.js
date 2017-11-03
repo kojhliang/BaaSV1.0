@@ -26,7 +26,7 @@ var ORGS = hfc.getConfigSetting('network-config');
 var tx_id = null;
 var eh = null;
 
-var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, functionName, args, username, org) {
+var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, functionName, args, username, org,peerId) {
 	logger.debug('\n============ Upgrade chaincode on organization ' + org +
 		' ============\n');
 
@@ -54,7 +54,7 @@ var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, fu
 		if (functionName)
 			request.fcn = functionName;
 
-		return channel.sendUpgradeProposal(request);
+		return channel.sendUpgradeProposal(request,300000);
 	}, (err) => {
 		logger.error('Failed to initialize the channel');
 		throw new Error('Failed to initialize the channel');
@@ -83,26 +83,38 @@ var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, fu
 				proposalResponses: proposalResponses,
 				proposal: proposal
 			};
+            logger.info('*************request:');
+            logger.info(request);
 			// set the transaction listener and set a timeout of 30sec
 			// if the transaction did not get committed within the timeout period,
 			// fail the test
 			var deployId = tx_id.getTransactionID();
+            logger.info('*************deployId:'+deployId);
 
 			eh = client.newEventHub();
-			let data = fs.readFileSync(path.join(__dirname, ORGS[org].peers['peer1'][
-				'tls_cacerts'
-			]));
-			eh.setPeerAddr(ORGS[org].peers['peer1']['events'], {
-				pem: Buffer.from(data).toString(),
-				'ssl-target-name-override': ORGS[org].peers['peer1']['server-hostname']
-			});
+			// let data = fs.readFileSync(path.join(__dirname, ORGS[org].peers['peer1'][  //这个会引发问题，因为如果不是在peer1上加入了管道并安装了智能合约，这个事件监听请求是无法收到的
+			// 	'tls_cacerts'
+			// ]));
+            let data = fs.readFileSync(path.join(__dirname, ORGS[org].peers[peerId][
+                'tls_cacerts'
+                ]));
+            logger.info('*************data:');
+            logger.info(data);
+			// eh.setPeerAddr(ORGS[org].peers['peer1']['events'], { //这个会引发问题，因为如果不是在peer1上加入了管道并安装了智能合约，这个事件监听请求是无法收到的
+			// 	pem: Buffer.from(data).toString(),
+			// 	'ssl-target-name-override': ORGS[org].peers['peer1']['server-hostname']
+			// });
+            eh.setPeerAddr(ORGS[org].peers[peerId]['events'], {
+                pem: Buffer.from(data).toString(),
+                'ssl-target-name-override': ORGS[org].peers[peerId]['server-hostname']
+            });
 			eh.connect();
 
 			let txPromise = new Promise((resolve, reject) => {
 				let handle = setTimeout(() => {
 					eh.disconnect();
 					reject();
-				}, 30000);
+				}, 5000);
 
 				eh.registerTxEvent(deployId, (tx, code) => {
 					logger.info(
@@ -123,6 +135,8 @@ var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, fu
 			});
 
 			var sendPromise = channel.sendTransaction(request);
+            logger.info('*************sendPromise:');
+            logger.info(sendPromise);
 			return Promise.all([sendPromise].concat([txPromise])).then((results) => {
 				logger.debug('Event promise all complete and testing complete');
 				return results[0]; // the first returned value is from the 'sendPromise' which is from the 'sendTransaction()' call
@@ -130,20 +144,51 @@ var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, fu
 				logger.error(
 					util.format('Failed to send upgrade transaction and get notifications within the timeout period. %s', err)
 				);
-				return 'Failed to send upgrade transaction and get notifications within the timeout period.';
+               let res = {
+                success: false,
+                message:  'Failed to send upgrade transaction and get notifications within the timeout period.',
+                data: deployId
+            };
+				//return 'Failed to send upgrade transaction and get notifications within the timeout period.';
+			return res;
 			});
 		} else {
 			logger.error(
 				'Failed to send upgrade Proposal or receive valid response. Response null or status is not 200. exiting...'
 			);
-			return 'Failed to send upgrade Proposal or receive valid response. Response null or status is not 200. exiting...';
+            let res = {
+                success: false,
+                message:  'Failed to send instantiate Proposal or receive valid response. Response null or status is not 200. exiting...',
+                data: deployId
+            };
+			return res;
 		}
 	}, (err) => {
 		logger.error('Failed to send upgrade proposal due to error: ' + err.stack ?
 			err.stack : err);
-		return 'Failed to send upgrade proposal due to error: ' + err.stack ?
-			err.stack : err;
-	}).then((response) => {
+        let res = {
+            success: false,
+            message:  'Failed to send upgrade proposal due to error: ' + err,
+            data: deployId
+        };
+        return res;
+	}).catch(function(reason_str){
+        logger.error('\n升级智能合约 \'' + chaincodeName + '\'失败!原因:\n\n');
+        logger.error(reason_str);
+        console.log('\n升级智能合约 \'' + chaincodeName + '\'失败!原因:\n\n'); //输出前端页面控制台
+        console.log(reason_str);
+        var str=""+reason_str;
+        let response = {
+            success: false,
+            message: 'Failed to  Upgrade chaincode '+chaincodeName+'!Reason:'+reason_str,
+            data: deployId
+        };
+        return response;
+    });
+
+
+	/*
+	.then((response) => {
 		if (response.status === 'SUCCESS') {
 			logger.info('Successfully sent transaction to the orderer.');
 			return 'Chaincode Upgrade is SUCCESS';
@@ -156,6 +201,6 @@ var upgradeChaincode = function(channelName, chaincodeName, chaincodeVersion, fu
 			.stack : err);
 		return 'Failed to send upgrade due to error: ' + err.stack ? err.stack :
 			err;
-	});
+	});*/
 };
 exports.upgradeChaincode = upgradeChaincode;

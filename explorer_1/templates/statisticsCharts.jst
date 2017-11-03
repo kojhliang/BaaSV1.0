@@ -3,7 +3,8 @@
 <html lang="en" ng-app=explorer>
 <head >
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Title</title>
+    <title> 网金BaaS平台管理后台 </title>
+
     <link rel="stylesheet" href="/style_main.css">
     <link rel="stylesheet" href="/style.css">
     <script src = "/Chart.min.js"></script>
@@ -12,24 +13,28 @@
      <script src = "/scripts.js"></script>
      <script src="/jquery.min.js"></script>
     <script src = "/angular-sanitize.min.js"></script>
+
+		<script src = "/socket.io.js"></script>
+     		<script src="/d3.v2.js"></script>
+     		<link href="/Anton.css" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="/font-awesome/css/font-awesome.min.css">		
+		<meta charset="utf-8">
+	  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <script>var ledgerData = ((=it.ledgerData));
 		var statsData = ((=it.statsData));
     </script>
       
 </head>
-<body>
+<body >
+
 <div class="echarts-container">
     <div class="e-charts" >
         <div class="title icon-1">
             <span>可视化图表</span>
-            <div class="select-channel">
+            <div class="select-channel" ng-controller="GRAPH_CHANNEL" >
                 <label>请选择管道：</label>
-                <select>
-                    <option>Mychannel1</option>
-                    <option>Mychannel1</option>
-                    <option>Mychannel1</option>
-                    <option>Mychannel1</option>
-                    <option>Mychannel1</option>
+                <select ng-model="selectChannel" ng-change="changeChannel(selectChannel)" ng-options=" x.channelName as x.channelName for x in Channel">
                 </select>
             </div>
         </div>
@@ -53,10 +58,12 @@
                 <div class="title icon-3"><span>出块率</span></div>
                 <div class="charts" id="blk_rate"></div>
             </div>
+	    
             <div class="box" ng-controller="BLK_TX_NEW">
                 <div class="title icon-4"><span>每个区块的交易数量</span></div>
                 <div class="charts" id="blk_tx"></div>
             </div>
+	   
             <div class="box" style="display:none">
                 <div class="title icon-5"><span>每个链码的交易数量</span></div>
                 <div class="charts" id="per"></div>

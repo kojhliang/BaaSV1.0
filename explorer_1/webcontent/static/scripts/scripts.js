@@ -110,6 +110,10 @@ App.factory("REST_SERVICE_POST", function($http){
  information also broadcasted to controllers one retrieved
  */
 App.factory("SHARE_INFORMATION", function($rootScope){
+    console.log("进入SHARE_INFORMATION,测试是否能拿到exp-server.js的全局变量");
+    console.log("socket");
+    var socket = io('http://'+window.location.host);
+    console.log(socket);
     var BlockInfo = {};
 
     BlockInfo.load_broadcast_transactions = function(data){
@@ -133,8 +137,8 @@ App.factory("SHARE_INFORMATION", function($rootScope){
         //console.log('locked');
     }
     window.redraw = function() {
-        //console.log('redraw',newData);
-        //console.log('unlocking');
+        console.log('redraw',newData);
+        console.log('unlocking');
         if(newData) {
             statsData = newData;
             rc.$broadcast("stats_broadcast_upd");
@@ -146,23 +150,25 @@ App.factory("SHARE_INFORMATION", function($rootScope){
         var socket = io('http://'+window.location.host);
         socket.on('stats', function (msg)
         {
+            console.log("********22222222222进入socket.on(stats)方法");
             //console.log(' OLD ' , statsData);
-            //console.log(' NEW ',msg)
+            console.log(' statsData ',msg)
             if(locked) {
                 newData =  JSON.parse(msg);;
-                console.log('locked');
+                console.log('*******************3333333进入locked');
             } else {
+                console.log('*******************3333333进入广播stats_broadcast_upd消息');
                 rc.$broadcast("stats_broadcast_upd");
                 statsData = JSON.parse(msg);
             }
 
         });
         socket.on('update', function (msg) {  // edit by lmd 20170919,suit Fabric1.0's block data struct
-            console.log("11111111");
-            console.log(ledgerData);
-           // ledgerData = {"peer_num":peer_num ,"chain" : { "height" : {"low" : 0}} , "total_peers" : [] , "peers" : {} , "blocks" : []};
 
+           // ledgerData = {"peer_num":peer_num ,"chain" : { "height" : {"low" : 0}} , "total_peers" : [] , "peers" : {} , "blocks" : []};
             var data = JSON.parse(msg);
+            console.log("****6666进入update方法,新的区块信息data为");
+            console.log(data);
             if(data.chain) {
                 ledgerData.chain = data.chain;
                 ledgerData.chain.cssClass = 'fade';
@@ -173,6 +179,7 @@ App.factory("SHARE_INFORMATION", function($rootScope){
                 }
                 ledgerData.peers = data.peers;
             }
+            //这里处理逻辑有问题，要考虑替换的情况
             if(data.blocks) {
                 if(latestBlock > 0)
                     for( var i = latestBlock; i < ledgerData.blocks.length; i++) {
@@ -189,7 +196,7 @@ App.factory("SHARE_INFORMATION", function($rootScope){
                         data.blocks[i].data.data[j].cssClass='fade';
                     }
                 }
-                ledgerData.blocks = ledgerData.blocks.concat(data.blocks);
+                ledgerData.blocks = data.blocks;
             }
             BlockInfo.chain = data.chain;
             rc.$broadcast("handle_broadcast_upd");
@@ -249,8 +256,6 @@ App.controller("CURRENT",
             //console.log( previousBlockHash.offset + " " + previousBlockHash.limit);
             previousBlockHash.description = stringToHex(previousBlockHash.buffer.data, previousBlockHash.offset, previousBlockHash.limit);
 
-
-
             SHARE_INFORMATION.load_broadcast_chain($scope.info);
         }
         $scope.info = {};
@@ -267,6 +272,161 @@ App.controller("CURRENT",
 
         });
         loadFunc();
+    }
+)
+
+App.controller("BLOCKS",
+    function($scope, SERVICE_BLOCK, SERVICE_HEIGHT,SHARE_INFORMATION,REST_SERVICE_GET){
+        // Used to update which block or transaction information should display once user chooses view or expand button from table
+        $scope.selected = 0;
+        $scope.initial = 0;
+        $scope.info= [];
+        $scope.infoc= {};
+        $scope.showLayer = false;
+
+        $scope.loader= {
+            loading: true,
+        };
+        $scope.hideloader = function(){
+            $scope.loader.loading = false;
+        }
+
+
+        //获取数据库channel
+        $scope.Channel = "";
+        REST_SERVICE_GET.getData("/api/v1/channelName","").then(function(data){
+            if(data.length ==0){
+                alert("请先创建管道");
+                //window.parent.location.href ="/?createChannel=true";
+                window.location.href ="/channelManager?createChannel=true";
+                return;
+            }
+            $scope.Channel =data;
+            //获取当前的Channel
+            REST_SERVICE_GET.getData("/getCurrentChannel","").then(function(data){
+                console.log(data);
+                if(data.code ==100){
+                    alert("请先创建管道")
+                }else {
+                    $scope.selectChannel = data.data;
+                }
+
+
+            });
+
+        });
+
+        $scope.changeChannel = function(x){
+            console.log(x);
+            //更改channel
+            ledgerData.blocks={};//切换管道，之前管道的区块信息都要清空
+            REST_SERVICE_GET.getData("/changeChannel?channelName=",x);
+        };
+
+
+        $scope.update = function(height){
+            console.log("进入BLOCKS的controller的update方法,重新获取的ledgerData.blocks内容为：");
+            console.log(ledgerData.blocks);
+            if(ledgerData.blocks.length > 11)
+                $scope.number_of_blocks_to_display = 11;
+            else
+                $scope.number_of_blocks_to_display = height;
+
+            var array_location = 0; // array location server response must be stored at
+            var count = 0; // number of responses returned from server
+            var len = $scope.info.length;
+            $scope.info2= [];
+            $scope.trans2 = [];
+            //for(var chain_index = height; chain_index>(height-len) && chain_index > 0; chain_index--){
+            for(var chain_index = 0; chain_index <= height; chain_index++){
+                var data = ledgerData.blocks[height - chain_index];
+                //console.log(data);
+                if(!data ) {//|| !data.nonHashData
+                    continue;
+                }
+                //var date = new Date(null);
+                //date.setSeconds(data.nonHashData.localLedgerCommitTimestamp.seconds);
+                //date.toISOString().substr(11, 8);
+                //data.nonHashData.localLedgerCommitTimestamp.date = date;
+                // using the array index that we passed in previously and added as metadata, we use it to store it in the correct array index, avoids sorting when mulitple requests happen asynchronously
+                data.location = count;
+                data.block_origin = height - chain_index;
+                $scope.info2[data.location] = data;
+
+                /*
+                 console.log("data.currentBlockHash");
+                 console.log(data.currentBlockHash);
+                 data.currentBlockHash.description = "123123"
+                 */
+                if( data.transactions && data.transactions.length ) {
+                    for(var k=0; k<data.transactions.length; k++){
+                        var date2 = new Date(null);
+                        date2.setSeconds(data.transactions[k].timestamp.seconds);
+                        data.transactions[k].date = date2;
+                        data.transactions[k].origin = data.block_origin;
+                        $scope.trans2.push(data.transactions[k]);
+                    }
+                }
+                count++;
+                // once all 10 GET requests are recieved and correctly stored inorder in array, we turn off loading symbol, and proceed to get all transactions from recieved blocks
+                if(count == $scope.number_of_blocks_to_display || chain_index+1 == height){
+                    console.log("进入BLOCKS的controller的update方法里的for循环结束处理逻辑，已经获得10个区块或者已拿到所有区块");
+                    $scope.hideloader();
+                    console.log("*****$scope.info2:");
+                    console.log($scope.info2);
+                    $scope.trans = [];
+                    for(var i=0; i<$scope.trans2.length; i++){
+                        $scope.trans = $scope.trans.concat($scope.trans2[i]);
+                    }
+                    // after all the block information is ready, $scope.range is initialized which is used in ng-repeat to itterate through all blocks, initialzed now to maintain smooth animation
+                    $scope.range = [0,1,2,3,4,5,6,7,8,9,10];
+                    setTimeout(function() { $scope.info = $scope.info2; $scope.$apply(); }, 0);
+                    // once all the transactions are loaded, then we broadcast the information to the Transaction controller that will use it to display the information
+                    setTimeout(function() {SHARE_INFORMATION.load_broadcast_transactions($scope.trans); }, 60);
+                }
+                array_location++;
+            }
+
+        }
+        // array used to keep track of 10 most recent blocks, if more than 10 would like to be dislpayed at a time, change $scope.number_of_block_to_display and $scope.range in $scope.update()
+        if(ledgerData.blocks.length > 10)
+            $scope.number_of_blocks_to_display = 10;
+        else
+            $scope.number_of_blocks_to_display = ledgerData.length;
+        $scope.info = new Array($scope.number_of_blocks_to_display);
+
+        // will be used to keep track of most recent transactions, initially array of objects with transcations from each block, in the end concated to $scope.trans with a single transaction at each index
+        $scope.trans2 = new Array($scope.number_of_blocks_to_display);
+        // broadcast reciever get chain information from CURRENT controller that initially calls http request, once height is known, specific blocks begin to be retrieved in $scope.update()
+        $scope.$on("handle_broadcast",function(){
+            console.log("进入BLOCKS的controller的handle_broadcast");
+            $scope.size = SHARE_INFORMATION.chain.height.low;
+            // if 0, then it's the initial startup of the controller, only run at the beggining once to get information
+            if($scope.initial == 0){
+                $scope.initial++;
+                $scope.update($scope.size-1);
+            }
+        });
+        $scope.$on("handle_broadcast_upd",function(){
+            $scope.size = SHARE_INFORMATION.chain.height.low;
+            $scope.update($scope.size-1);
+        });
+
+        // updates selected block number and displays form with transaction info based on selection
+        $scope.Update_selected_block = function(idx){
+            //$scope.selected = x;
+            $scope.infoc = angular.copy($scope.info[idx]);
+            $scope.infoc.blockNum  = $scope.size - idx -1;
+            // document.forms["change2"].submit();
+            $scope.showLayer = true;
+        }
+        $scope.closeLayer = function () {
+            $scope.showLayer = false;
+        }
+        if(!$scope.info) {
+            $scope.info = [];
+        }
+
     }
 )
 
@@ -442,6 +602,12 @@ App.controller("CHAINCODE_LOG",
             if( $scope.checkParams($('#chaincodeId').val())){
                 $scope.searchParams +="&chaincodeId="+$('#chaincodeId').val();
             }
+            if( $scope.checkParams($('#channelId').val())){
+                $scope.searchParams +="&channelId="+$('#channelId').val();
+            }
+            if( $scope.checkParams($('#params').val())){
+                $scope.searchParams +="&params="+$('#params').val();
+            }
             //  console.log($scope.searchParams);
             $scope.getList(1);
         };
@@ -486,17 +652,20 @@ App.controller("CHAINCODE_DEPLOY",
         //获取数据库channel
         $scope.Channel = "";
         REST_SERVICE_GET.getData("/api/v1/channelName","").then(function(data){
+            console.log("/api/v1/channelName，data:");
+            console.log(data);
             if(data.length ==0){
-                alert("请先创建channel");
+                alert("请先创建管道");
                 window.location.href ="/channelManager";
                 return;
             }
             $scope.Channel =data;
             //获取当前的Channel
             REST_SERVICE_GET.getData("/getCurrentChannel","").then(function(data){
+                console.log("/getCurrentChannel，data:");
                 console.log(data);
                 if(data.code ==100){
-                    alert("请先创建channel")
+                    alert("请先创建管道")
                 }else {
                     $scope.selectChannel = data.data;
                 }
@@ -505,10 +674,8 @@ App.controller("CHAINCODE_DEPLOY",
             });
 
         });
-
         $scope.addExample =function () {
            // $scope.g_selectedChaincode
-
             if($scope.selectChannel ==''||$scope.selectChannel ==undefined){
                 alert("请选择管道");
                 return;
@@ -523,10 +690,19 @@ App.controller("CHAINCODE_DEPLOY",
             }
             REST_SERVICE_POST.getData("/api/v1/newDeployChaincode/channel/"+$scope.selectChannel+"/chaincode/"+$scope.chaincodeName+"/"+$scope.chaincodeVersion+"/"+$scope.g_selectedChaincode.pk_Id,"").then(function(data){
                 if(data.code ==200){
-                    alert("操作成功");
+                    //alert("操作成功");
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultSuccess").show();
+                    $("#resultSuccessSpan").text("新增实例成功！");
+                    $("#resultFail").hide();
                     $(".deploy-layer,.grey-background").hide();
                 }else {
-                    alert("操作失败");
+                    //alert("操作失败");
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultFail").show();
+                    $("#resultFailSpan").text("新增实例失败！");
+                    $("#retMsg").text(data.msg);
+                    $("#resultSuccess").hide();
                 }
 
             });
@@ -998,7 +1174,7 @@ App.controller("CHAINCODE_EXECUTE",
         $scope.deployChainCode = "";
         REST_SERVICE_GET.getData("/api/v1/chaincode","?page=1&size=1000","").then(function(data){
             if(data.length ==0){
-                alert("请先创建ChainCode");
+                alert("请先创建智能合约");
                 window.location.href ="/chaincodeManager";
                 return;
             }
@@ -1042,10 +1218,10 @@ App.controller("CHAINCODE_EXECUTE",
             //     drawTree('peerTree',data);
             // });
 
-            REST_SERVICE_GET.getData("api/v1/org/peer","").then(function(allTree){
-                //console.log(allTree)
-
-
+            REST_SERVICE_GET.getData("api/v1/joinChannel/"+data.channelId+"/peer","").then(function(allTree){
+                console.log("allTree:");
+                console.log(allTree);
+                console.log("$scope.g_selectedChaincode.installPeers");
                 console.log($scope.g_selectedChaincode.installPeers);
                 if($scope.g_selectedChaincode.installPeers !=null) {
                     var channelTree = $scope.g_selectedChaincode.installPeers.split(",");
@@ -1065,8 +1241,6 @@ App.controller("CHAINCODE_EXECUTE",
                 }
                     console.log(data);
                     drawTree('peerTree',allTree);
-
-
             });
 
 
@@ -1093,14 +1267,28 @@ App.controller("CHAINCODE_EXECUTE",
                 peers +=nodes[i].id+",";
             }
             peers=peers.substring(0,peers.length-1);
+            console.log("peers:");
             console.log(peers);
+            $scope.deployBotton(false);
             REST_SERVICE_POST.getData("api/v1/installChaincode/"+$scope.g_selectedChaincode.pk_id+"/peer/"+peers,"").then(function(data){
+                $scope.deployBotton(true);
                 console.log(data);
-                if(data.code ==200){
+                if(data.code == 200){
+                    //alert("安装智能合约成功!");
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultSuccess").show();
+                    $("#resultSuccessSpan").text("安装智能合约成功!");
+                    $("#resultFail").hide();
                     $scope.hideInstallLayer();
                     $scope.getList(1);
                 }else {
-                    alert(data.msg);
+                    var err=""+data.msg;
+                    //alert("安装智能合约失败!原因：\n"+err);
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultFail").show();
+                    $("#resultFailSpan").text("安装智能合约失败!");
+                    $("#retMsg").text(err);
+                    $("#resultSuccess").hide();
                 }
 
             });
@@ -1109,13 +1297,6 @@ App.controller("CHAINCODE_EXECUTE",
         $scope.showChainCode =false;
         // 初始化实例
         $scope.showInitLayer = function(data,type){
-            if(type =='init'){
-                $scope.showChainCode =false;
-                $scope.title = '初始化';
-            }else {
-                $scope.showChainCode =true;
-                $scope.title = '升级';
-            }
 
             $("#init-layer").show();
             $(".grey-background").show();
@@ -1124,11 +1305,54 @@ App.controller("CHAINCODE_EXECUTE",
             $scope.chaincodeName = data.ChaincodeName;
             $scope.chaincodeVersion =data.version;
             $scope.channelName = data.channelName;
+
+            if(type =='init'){
+                $scope.showChainCode =false;
+                $scope.title = '初始化';
+            }else {
+                $scope.showChainCode =true;
+                $scope.chaincodeVersion ="";
+                $scope.title = '升级';
+            }
+            //console.log("$scope.deployChainCode:");
+           // console.log($scope.deployChainCode)
         };
         $scope.hideInitLayer = function(){
             $("#init-layer").hide();
             $(".grey-background").hide();
         };
+
+        // 升级实例
+        $scope.showUpdateLayer = function(data,type){
+            $scope.showChainCode =true;
+            $scope.title = '升级';
+            $("#update-layer").show();
+            $(".grey-background").show();
+
+            $scope.g_selectedChaincode =data;
+            $scope.chaincodeName = data.ChaincodeName;
+            $scope.chaincodeVersion ="";
+            $scope.channelName = data.channelName;
+        };
+        $scope.hideUpdateLayer = function(){
+            $("#update-layer").hide();
+            $(".grey-background").hide();
+        };
+
+        $scope.deployBotton =function (able) {
+            if(able){
+                $(".open-resultLayer").show();
+                $(".disabledStyle").hide();
+            }else {
+                $(".open-resultLayer").hide();
+                $(".disabledStyle").show();
+            }
+        };
+
+        //错误信息的关闭按钮
+        $scope.closeAlertLayer = function(){
+            $(".result-layer,.grey-background2").hide();
+        }
 
         //提交，初始化或升级
         $scope.commitChaincode = function () {
@@ -1150,20 +1374,51 @@ App.controller("CHAINCODE_EXECUTE",
             inputVal = $scope.userInput1+inputVal;
 
             var url ='';
+
             if($scope.showChainCode){
-                url = 'api/v1/upgradeChaincode/'+$scope.g_selectedChaincode.pk_id+'/newChaincode/'+$scope.selectChainCode+'/param/'+inputVal;
+                url = 'api/v1/upgradeChaincode/'+$scope.g_selectedChaincode.pk_id+'/newChaincode/'+$scope.selectChainCode+'/newChaincodeVersion/'+$scope.chaincodeVersion+'/param/'+inputVal;
             }else {
                 url = "api/v1/initiateChaincode/"+$scope.g_selectedChaincode.pk_id+"/param/"+inputVal+"/policy/"+$scope.endorsePolicy;
             }
 
-
+            console.log("url:");
+            console.log(url)
+            $scope.deployBotton(false);
             REST_SERVICE_POST.getData(url,"").then(function(data){
+                $scope.deployBotton(true);
                 console.log(data);
                 if(data.code ==200){
+                    if($scope.showChainCode){
+                      //  alert("升级智能合约成功！");
+                        $(".result-layer,.grey-background2").show();
+                        $("#resultSuccess").show();
+                        $("#resultSuccessSpan").text("升级智能合约成功！");
+                        $("#resultFail").hide();
+                    }else{
+                        //alert("初始化智能合约成功！");
+                        $(".result-layer,.grey-background2").show();
+                        $("#resultSuccess").show();
+                        $("#resultSuccessSpan").text("初始化智能合约成功！");
+                        $("#resultFail").hide();
+                    }
                     $scope.hideInitLayer();
                     $scope.getList(1);
                 }else {
-                    alert(data.msg);
+                    if($scope.showChainCode){
+                        //alert("升级智能合约失败！错误信息:"+data.msg);
+                        $(".result-layer,.grey-background2").show();
+                        $("#resultFail").show();
+                        $("#resultFailSpan").text("升级智能合约失败！");
+                        $("#retMsg").text(data.msg);
+                        $("#resultSuccess").hide();
+                    }else{
+                        //alert("初始化智能合约失败！错误信息:"+data.msg);
+                        $(".result-layer,.grey-background2").show();
+                        $("#resultFail").show();
+                        $("#resultFailSpan").text("初始化智能合约失败！");
+                        $("#retMsg").text(data.msg);
+                        $("#resultSuccess").hide();
+                    }
                 }
 
             });
@@ -1185,15 +1440,7 @@ App.controller("CHAINCODE_EXECUTE",
             return reslut;
         };
 
-        // 升级实例
-        $scope.showUpdateLayer = function(){
-            $("#update-layer").show();
-            $(".grey-background").show();
-        };
-        $scope.hideUpdateLayer = function(){
-            $("#update-layer").hide();
-            $(".grey-background").hide();
-        };
+
 
 
         // 画管道树
@@ -1245,13 +1492,13 @@ App.controller("CHAINCODE_EXECUTE",
             $scope.paramsListUpdate.splice(index,1);
         }
 
-        //背书策略费用提示
+        //背书策略提示
         $scope.showTipLayer = function () {
-            var msg = '费用主要分两部分，一部分是构建区块链环境时使用青云的硬件资源设施费用，这部分费用是给到青云平台的，另一部分费用是使用网金BaaS平台服务的费用。';
+            var msg = '例子:OR(\'Org1MSP.member\',\'Org2MSP.member\')';
             var even = event;
             showTipContent(even,'expense-tip',msg);
         };
-        //关闭背书策略费用提示
+        //关闭背书策略提示
         $scope.hideDialog=function(id){
             hideDialog(id)
         }
@@ -1281,6 +1528,7 @@ App.controller("NETWORK",
                 var obj =[];
                 for(var i=0;i<data.length;i++){
                     obj.push([data[i].channelName]);
+                    //obj.push([data[i].channel_id]);
                 }
                  console.log(obj);
                 showPipeList(even,'follow-dialog', {th:['管道名'], td:obj});
@@ -1432,7 +1680,20 @@ App.controller("CHANNEL_MANAGER",
 
         $scope.getList(1);
 
+        $scope.deployBotton =function (able) {
+            if(able){
+                $(".open-resultLayer").show();
+                $(".disabledStyle").hide();
+            }else {
+                $(".open-resultLayer").hide();
+                $(".disabledStyle").show();
+            }
+        };
 
+        //错误信息的关闭按钮
+        $scope.closeAlertLayer = function(){
+            $(".result-layer,.grey-background2").hide();
+        }
 
         //根据 管道，获取当前加入节点信息
     $scope.getPeerByChannelId = function (id) {
@@ -1483,6 +1744,7 @@ App.controller("CHANNEL_MANAGER",
         // 新增管道
         $scope.createPeerInfo = function(){
             $scope.title = "新增管道";
+            $scope.type = "add";
             $scope.channelName ='';
             REST_SERVICE_GET.getData("api/v1/org/peer","").then(function(data){
                 console.log(data);
@@ -1495,6 +1757,8 @@ App.controller("CHANNEL_MANAGER",
         // 修改管道
         $scope.editPeerInfo = function(data){
             $scope.title = "修改管道";
+            $scope.type = "edit";
+            $scope.pkId = ""+data.pk_id;
             $scope.channelName=data.channelname;
             REST_SERVICE_GET.getData("api/v1/org/peer","").then(function(allTree){
                 //console.log(allTree);
@@ -1543,6 +1807,13 @@ App.controller("CHANNEL_MANAGER",
             });
         };
 
+        $scope.changeChannel = function(x){
+            console.log(x);
+            //更改channel
+            REST_SERVICE_GET.getData("/changeChannel?channelName=",x).then(function(data){
+
+            });
+        };
 
         $scope.createChannel =function () {
 
@@ -1564,16 +1835,99 @@ App.controller("CHANNEL_MANAGER",
             }
             peers=peers.substring(0,peers.length-1);
             console.log(peers);
-            REST_SERVICE_POST.getData("api/v1/newChannel/"+$scope.channelName+"/peer/"+peers,"").then(function(data){
+            var type=$scope.type;
+            $scope.deployBotton(false);
+            REST_SERVICE_POST.getData("api/v1/newOrEditChannel/"+$scope.channelName+"/peer/"+peers+"/type/"+type,"").then(function(data){
+                $scope.deployBotton(true);
+                console.log("new channel result:");
                 console.log(data);
                 if(data.code ==200){
+                    //alert("新增管道成功！");
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultSuccess").show();
+                    $("#resultSuccessSpan").text("新增管道成功！");
+                    $("#resultFail").hide();
                     $scope.closeEditPeerLayer();
                     $scope.getList(1);
+                     //如果还没创建过管道并且channelName为空，则设置channelName为刚才创建的管道
+                    REST_SERVICE_GET.getData("/getCurrentChannel","").then(function(data){
+                        console.log(data);
+                        if(data.code ==100){
+                            $scope.changeChannel($scope.channelName); //更改为默认管道
+                        }
+                    });
+
+                }else {
+                    //alert("新增管道失败！原因:" + data.msg);
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultFail").show();
+                    $("#resultFailSpan").text("新增管道失败！");
+                    $("#retMsg").text(data.msg);
+                    $("#resultSuccess").hide();
+                }
+                /*
+                var result_str;
+                var flag=true;
+                for(let x in data){
+                    if(data[x].code ==500){
+                        flag=false;
+                        result_str=result_str+data[x].msg+"\n";
+                    }
+                }
+                if(flag ==true){
+                    alert("新增管道成功！");
+                    $scope.closeEditPeerLayer();
+                    $scope.getList(1);
+                }else {
+                    alert("新增管道失败！原因:" + result_str);
+                }
+                */
+            });
+        };
+
+
+        $scope.editChannel =function () {
+
+            var treeObj = $.fn.zTree.getZTreeObj("peerTree2");
+            var nodes = treeObj.getCheckedNodes(true);
+            console.log(nodes);
+            if(nodes.length ==0){
+                alert("请选择节点");
+                return;
+            }
+            var peers ='';
+            for(var i=0;i<nodes.length;i++){
+                peers +=nodes[i].id+",";
+            }
+            peers=peers.substring(0,peers.length-1);
+            console.log(peers);
+            var type=$scope.type;
+            $scope.deployBotton(false);
+            REST_SERVICE_POST.getData("api/v1/newOrEditChannel/"+$scope.channelName+"/peer/"+peers+"/type/"+type,"").then(function(data){
+                $scope.deployBotton(true);
+                console.log("edit channel result:");
+                console.log(data);
+                if(data.code ==200){
+                    //alert("修改管道成功！");
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultSuccess").show();
+                    $("#resultSuccessSpan").text("修改管道成功！");
+                    $("#resultFail").hide();
+                    $scope.closeEditPeerLayer();
+                    $scope.getList(1);
+                }else {
+                    //alert("修改管道失败！错误信息:\n" + data.msg);
+                    $(".result-layer,.grey-background2").show();
+                    $("#resultFail").show();
+                    $("#resultFailSpan").text("新增管道失败！");
+                    $("#retMsg").text(data.msg);
+                    $("#resultSuccess").hide();
                 }
 
             });
 
         };
+
 
         // 画管道树
         function drawTree(id,data){
@@ -1673,6 +2027,40 @@ App.directive("barsChart", function ($parse) {
     return object;
 });
 
+//梁敏鸿 add 20171016
+App.controller("GRAPH_CHANNEL",
+    function($scope, REST_SERVICE_GET,SHARE_INFORMATION){
+        //获取数据库channel
+        $scope.Channel = "";
+        //查询数据库是否有管道记录，如果没有，提示创建管道
+        REST_SERVICE_GET.getData("/api/v1/channelName","").then(function(data){
+            if(data.length ==0){
+                alert("请先创建管道");
+                //window.parent.location.href ="/?createChannel=true";
+                window.location.href ="/channelManager?createChannel=true";
+                return;
+            }
+            //console.log(data);
+            $scope.Channel =data;
+            //获取当前全局变量的管道名
+            REST_SERVICE_GET.getData("/getCurrentChannel","").then(function(data){
+                console.log(data);
+                if(data.code ==100){
+                    alert("请先创建管道")
+                }else {
+                    $scope.selectChannel = data.data;
+                }
+            });
+        });
+
+        $scope.changeChannel = function(x){
+            console.log(x);
+            //更改channel
+            REST_SERVICE_GET.getData("/changeChannel?channelName=",x);
+        };
+
+    });
+
 App.controller("GRAPH",
     function($scope){
 
@@ -1683,6 +2071,7 @@ App.controller("GRAPH",
 
 
         $scope.$on("stats_broadcast_upd",function(){
+            console.log("进入GRAPH的on stats_broadcast_upd方法");
             setTimeout(function(){
                 $scope.checkTime = statsData.checkTime;
                 if($scope.avgTxnLatency < statsData.avgTxnLatency)
@@ -1721,79 +2110,85 @@ App.controller("TX_RATE_NEW",
 
         var dataChg= true;
         $scope.$on("stats_broadcast_upd",function(){
+            console.log("进入TX_RATE_NEW的on stats_broadcast_upd方法");
+            console.log("****statsData");
+            console.log(statsData);
             setTimeout(function(){
-                if($scope.chart.data && statsData.txRateGraph) {
-                    $scope.chart.data.datasets[0].data = statsData.txRateGraph.txRate;
-                    $scope.chart.data.labels = statsData.txRateGraph.time;
-                    $scope.chart.update();
-                }
-
+                // if($scope.chart.data && statsData.txRateGraph) {
+                //     $scope.chart.data.datasets[0].data = statsData.txRateGraph.txRate;
+                //     $scope.chart.data.labels = statsData.txRateGraph.time;
+                //     $scope.chart.update();
+                // }
+                showChart();
             },20);
         });
-
-        var data = {
-            labels: statsData.txRateGraph.time,
-            datasets: [
-                {
-                    label: "Transaction Rate by time",
-                    fill: false,
-                    lineTension: 0.1,
-                    backgroundColor: "rgba(75,192,192,1)",
-                    borderColor: "rgba(75,192,192,1)",
-                    borderCapStyle: 'butt',
-                    borderDash: [],
-                    borderDashOffset: 0.0,
-                    borderJoinStyle: 'miter',
-                    pointBorderColor: "rgba(75,192,192,1)",
-                    pointBackgroundColor: "#fff",
-                    pointBorderWidth: 1,
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: "rgba(75,192,192,1)",
-                    pointHoverBorderColor: "rgba(220,220,220,1)",
-                    pointHoverBorderWidth: 2,
-                    pointRadius: 1,
-                    pointHitRadius: 10,
-                    data: statsData.txRateGraph.txRate,
-                    spanGaps: false,
-                }
-            ]
-        };
-
-        $scope.ctx = $("#tx_rate");
         var line_txrate = echarts.init(document.getElementById('tx_rate'));
-        var line_txrate_Option = {
-            legend: {
-                data: ['按时间的交易速度'],
-                right: '10px'
-            },
-            color: ['#2593ef'],
-            grid: {
-                left: '40px',
-                right: '20px',
-                top: '40px',
-                bottom: '30px'
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: data.labels
-            },
-            yAxis: {
-                type: 'value',
+        function showChart(){
+            var data = {
+                labels: statsData.txRateGraph.time,
+                datasets: [
+                    {
+                        label: "Transaction Rate by time",
+                        fill: false,
+                        lineTension: 0.1,
+                        backgroundColor: "rgba(75,192,192,1)",
+                        borderColor: "rgba(75,192,192,1)",
+                        borderCapStyle: 'butt',
+                        borderDash: [],
+                        borderDashOffset: 0.0,
+                        borderJoinStyle: 'miter',
+                        pointBorderColor: "rgba(75,192,192,1)",
+                        pointBackgroundColor: "#fff",
+                        pointBorderWidth: 1,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: "rgba(75,192,192,1)",
+                        pointHoverBorderColor: "rgba(220,220,220,1)",
+                        pointHoverBorderWidth: 2,
+                        pointRadius: 1,
+                        pointHitRadius: 10,
+                        data: statsData.txRateGraph.txRate,
+                        spanGaps: false,
+                    }
+                ]
+            };
+            $scope.ctx = $("#tx_rate");
+            var line_txrate_Option = {
+                legend: {
+                    data: ['按时间的交易速度'],
+                    right: '10px'
+                },
+                color: ['#2593ef'],
+                grid: {
+                    left: '40px',
+                    right: '20px',
+                    top: '40px',
+                    bottom: '30px'
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.labels
+                },
+                yAxis: {
+                    type: 'value',
 
-                axisLabel: {
+                    axisLabel: {
 
-                }
-            },
-            series: [
-                {
-                    name: '按时间的交易速度',
-                    type: 'line',
-                    data: data.datasets[0].data
-                }
-            ]
-        };
-        line_txrate.setOption(line_txrate_Option);
+                    }
+                },
+                series: [
+                    {
+                        name: '按时间的交易速度',
+                        type: 'line',
+                        data: data.datasets[0].data
+                    }
+                ]
+            };
+            line_txrate.setOption(line_txrate_Option);
+        }
+        showChart();
+
+
     }
 )
 
@@ -1882,80 +2277,88 @@ App.controller("BLK_RATE_NEW",
 
     function($scope) {
         $scope.$on("stats_broadcast_upd",function(){
+            console.log("进入BLK_RATE_NEW的on stats_broadcast_upd方法");
+            // console.log("****statsData");
+            // console.log(statsData);
             setTimeout(function(){
-                if($scope.chart.data && statsData.blkRateGraph) {
-                    $scope.chart.data.datasets[0].data = statsData.blkRateGraph.blkRate;
-                    $scope.chart.data.labels = statsData.blkRateGraph.time;
-                    $scope.chart.update();
-                }
-
+                // if($scope.chart.data && statsData.blkRateGraph) {
+                //     $scope.chart.data.datasets[0].data = statsData.blkRateGraph.blkRate;
+                //     $scope.chart.data.labels = statsData.blkRateGraph.time;
+                //     $scope.chart.update();
+                // }
+                showChart();
             },30);
         });
-
-        var data = {
-            labels: statsData.blkRateGraph.time,
-            datasets: [
-                {
-                    label: "Block Rate by time",
-                    data: statsData.blkRateGraph.blkRate,
-                    fill: false,
-                    lineTension: 0.1,
-                    backgroundColor: "yellow", //fille color top icon
-                    borderColor: "yellow", //line color
-                    borderCapStyle: 'butt',
-                    borderDash: [],
-                    borderDashOffset: 0.0,
-                    borderJoinStyle: 'miter',
-                    pointBorderColor: "yellow",
-                    pointBackgroundColor: "yellow",
-                    pointBorderWidth: 1,
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: "orange",
-                    pointHoverBorderColor: "rgba(220,220,220,1)",
-                    scaleFontColor: "white",
-                    pointHoverBorderWidth: 2,
-                    pointRadius: 1,
-                    pointHitRadius: 10,
-                    spanGaps: false
-                }
-            ]
-        };
-
-        $scope.ctx = $("#blk_rate");
         var line2 = echarts.init(document.getElementById('blk_rate'));
-        var line2Option = {
-            legend: {
-                data: ['按时间的出块速度'],
-                right: '10px'
-            },
-            color: ['#2593ef'],
-            grid: {
-                left: '40px',
-                right: '20px',
-                top: '40px',
-                bottom: '30px'
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: data.labels
-            },
-            yAxis: {
-                type: 'value',
+        function showChart(){
+            var data = {
+                labels: statsData.blkRateGraph.time,
+                datasets: [
+                    {
+                        label: "Block Rate by time",
+                        data: statsData.blkRateGraph.blkRate,
+                        fill: false,
+                        lineTension: 0.1,
+                        backgroundColor: "yellow", //fille color top icon
+                        borderColor: "yellow", //line color
+                        borderCapStyle: 'butt',
+                        borderDash: [],
+                        borderDashOffset: 0.0,
+                        borderJoinStyle: 'miter',
+                        pointBorderColor: "yellow",
+                        pointBackgroundColor: "yellow",
+                        pointBorderWidth: 1,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: "orange",
+                        pointHoverBorderColor: "rgba(220,220,220,1)",
+                        scaleFontColor: "white",
+                        pointHoverBorderWidth: 2,
+                        pointRadius: 1,
+                        pointHitRadius: 10,
+                        spanGaps: false
+                    }
+                ]
+            };
 
-                axisLabel: {
+            $scope.ctx = $("#blk_rate");
 
-                }
-            },
-            series: [
-                {
-                    name: '按时间的出块速度',
-                    type: 'line',
-                    data: data.datasets[0].data
-                }
-            ]
-        };
-        line2.setOption(line2Option);
+            var line2Option = {
+                legend: {
+                    data: ['按时间的出块速度'],
+                    right: '10px'
+                },
+                color: ['#2593ef'],
+                grid: {
+                    left: '40px',
+                    right: '20px',
+                    top: '40px',
+                    bottom: '30px'
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: data.labels
+                },
+                yAxis: {
+                    type: 'value',
+
+                    axisLabel: {
+
+                    }
+                },
+                series: [
+                    {
+                        name: '按时间的出块速度',
+                        type: 'line',
+                        data: data.datasets[0].data
+                    }
+                ]
+            };
+            line2.setOption(line2Option);
+        }
+        showChart();
+
+
 
 
     }
@@ -2045,93 +2448,97 @@ App.controller("BLK_TX_NEW",
 
     function($scope) {
         $scope.$on("stats_broadcast_upd",function(){
-            if($scope.chart.data && statsData.blkTxGraph) {
+            console.log("进入BLK_TX_NEW的on stats_broadcast_upd方法");
+            // console.log("****statsData");
+            // console.log(statsData);
+            // if($scope.chart.data && statsData.blkTxGraph) {
+            setTimeout(function() {
+                        // data.labels = statsData.blkTxGraph.block;
+                        // $scope.chart.data.datasets[0].data = statsData.blkTxGraph.txs;
+                        // $scope.chart.update();
+                       showChart();
+                    },40);
+            // }
 
-
-                setInterval(function() {
-                        data.labels = statsData.blkTxGraph.block;
-                        $scope.chart.data.datasets[0].data = statsData.blkTxGraph.txs;
-                        $scope.chart.update();
-                    },40
-                );
-            }
         });
-
-        var data = {
-            labels: statsData.blkTxGraph.block,
-            datasets: [
-                {
-                    label: "Transactions per block",
-                    data: statsData.blkTxGraph.txs,
-                    fill: false,
-                    lineTension: 5,
-                    backgroundColor: "#00ff00", //fille color top icon
-                    borderColor: "#00ff00", //line color
-                    borderCapStyle: 'butt',
-                    borderDash: [],
-                    borderDashOffset: 0.0,
-                    borderJoinStyle: 'miter',
-                    pointBorderColor: "yellow",
-                    pointBackgroundColor: "grey",
-                    pointBorderWidth: 1,
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: "orange",
-                    pointHoverBorderColor: "rgba(220,220,220,1)",
-                    scaleFontColor: "white",
-                    pointHoverBorderWidth: 2,
-                    pointRadius: 1,
-                    pointHitRadius: 10,
-                    spanGaps: true
-                }
-            ]
-        };
-
-        $scope.ctx = $("#blk_tx");
         var bar=echarts.init(document.getElementById('blk_tx'));
-        var barOption={
-            legend: {
-                data: ['每个区块的交易数量'],
-                right: '10px'
-            },
-            color: ['#3c9bf0'],
-            tooltip : {
-                trigger: 'axis',
-                axisPointer : {
-                    type : 'shadow'
-                }
-            },
-            grid: {
-                left: '40px',
-                right: '20px',
-                top: '40px',
-                bottom: '30px'
-            },
-            xAxis : [
-                {
-                    type : 'category',
-                    data : data.labels,
-                    axisTick: {
-                        alignWithLabel: true
+        function showChart(){
+
+            var data = {
+                labels: statsData.blkTxGraph.block,
+                datasets: [
+                    {
+                        label: "Transactions per block",
+                        data: statsData.blkTxGraph.txs,
+                        fill: false,
+                        lineTension: 5,
+                        backgroundColor: "#00ff00", //fille color top icon
+                        borderColor: "#00ff00", //line color
+                        borderCapStyle: 'butt',
+                        borderDash: [],
+                        borderDashOffset: 0.0,
+                        borderJoinStyle: 'miter',
+                        pointBorderColor: "yellow",
+                        pointBackgroundColor: "grey",
+                        pointBorderWidth: 1,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: "orange",
+                        pointHoverBorderColor: "rgba(220,220,220,1)",
+                        scaleFontColor: "white",
+                        pointHoverBorderWidth: 2,
+                        pointRadius: 1,
+                        pointHitRadius: 10,
+                        spanGaps: true
                     }
-                }
-            ],
-            yAxis : [
-                {
-                    type : 'value'
-                }
-            ],
-            series : [
-                {
-                    name:'每个区块的交易数量',
-                    type:'bar',
-                    barWidth: '60%',
-                    data:data.datasets[0].data
-                }
-            ]
-        };
-        bar.setOption(barOption);
+                ]
+            };
 
+            $scope.ctx = $("#blk_tx");
 
+            var barOption={
+                legend: {
+                    data: ['每个区块的交易数量'],
+                    right: '10px'
+                },
+                color: ['#3c9bf0'],
+                tooltip : {
+                    trigger: 'axis',
+                    axisPointer : {
+                        type : 'shadow'
+                    }
+                },
+                grid: {
+                    left: '40px',
+                    right: '20px',
+                    top: '40px',
+                    bottom: '30px'
+                },
+                xAxis : [
+                    {
+                        type : 'category',
+                        data : data.labels,
+                        axisTick: {
+                            alignWithLabel: true
+                        }
+                    }
+                ],
+                yAxis : [
+                    {
+                        type : 'value'
+                    }
+                ],
+                series : [
+                    {
+                        name:'每个区块的交易数量',
+                        type:'bar',
+                        barWidth: '60%',
+                        data:data.datasets[0].data
+                    }
+                ]
+            };
+            bar.setOption(barOption);
+        }
+        showChart();
     }
 )
 
@@ -2331,28 +2738,15 @@ App.controller("TRIGGER",
     }
 )
 
-App.controller("BLOCKS",
-    function($scope, SERVICE_BLOCK, SERVICE_HEIGHT,SHARE_INFORMATION,REST_SERVICE_GET){
-        // Used to update which block or transaction information should display once user chooses view or expand button from table
-        $scope.selected = 0;
-        $scope.initial = 0;
-        $scope.info= [];
-        $scope.infoc= {};
-        $scope.showLayer = false;
-
-        $scope.loader= {
-            loading: true,
-        };
-        $scope.hideloader = function(){
-            $scope.loader.loading = false;
-        }
-
-        //获取数据库channel
+App.controller("MAINPAGE",
+     function($scope, REST_SERVICE_GET){
+		 //获取数据库channel
         $scope.Channel = "";
+		alert("进入main");
         REST_SERVICE_GET.getData("/api/v1/channelName","").then(function(data){
             if(data.length ==0){
-                alert("请先创建channel");
-                window.location.href ="/channelManager";
+                alert("请先创建管道");
+                window.location.href ="/?createChannel=true";
                 return;
             }
             $scope.Channel =data;
@@ -2360,132 +2754,15 @@ App.controller("BLOCKS",
             REST_SERVICE_GET.getData("/getCurrentChannel","").then(function(data){
                 console.log(data);
                 if(data.code ==100){
-                    alert("请先创建channel")
+                    alert("请先创建管道")
                 }else {
                     $scope.selectChannel = data.data;
                 }
+            });		 
+	 })
+	 });
 
 
-            });
-
-        });
-
-        $scope.changeChannel = function(x){
-            console.log(x);
-            //更改channel
-            REST_SERVICE_GET.getData("/changeChannel?channelName=",x).then(function(data){
-
-            });
-        };
-
-
-        $scope.update = function(height){
-
-            if(ledgerData.blocks.length > 11)
-                $scope.number_of_blocks_to_display = 11;
-            else
-                $scope.number_of_blocks_to_display = height;
-
-            var array_location = 0; // array location server response must be stored at
-            var count = 0; // number of responses returned from server
-            var len = $scope.info.length;
-            $scope.info2= [];
-            $scope.trans2 = [];
-            //for(var chain_index = height; chain_index>(height-len) && chain_index > 0; chain_index--){
-            for(var chain_index = 0; chain_index <= height; chain_index++){
-                var data = ledgerData.blocks[height - chain_index];
-                //console.log(data);
-                if(!data ) {//|| !data.nonHashData
-                    continue;
-                }
-                //var date = new Date(null);
-                //date.setSeconds(data.nonHashData.localLedgerCommitTimestamp.seconds);
-                //date.toISOString().substr(11, 8);
-                //data.nonHashData.localLedgerCommitTimestamp.date = date;
-                // using the array index that we passed in previously and added as metadata, we use it to store it in the correct array index, avoids sorting when mulitple requests happen asynchronously
-                data.location = count;
-                data.block_origin = height - chain_index;
-
-                $scope.info2[data.location] = data;
-
-				/*
-				 console.log("data.currentBlockHash");
-				 console.log(data.currentBlockHash);
-				 data.currentBlockHash.description = "123123"
-				 */
-
-                if( data.transactions && data.transactions.length ) {
-                    for(var k=0; k<data.transactions.length; k++){
-                        var date2 = new Date(null);
-                        date2.setSeconds(data.transactions[k].timestamp.seconds);
-                        data.transactions[k].date = date2;
-                        data.transactions[k].origin = data.block_origin;
-                        $scope.trans2.push(data.transactions[k]);
-                    }
-                }
-
-                count++;
-
-                // once all 10 GET requests are recieved and correctly stored inorder in array, we turn off loading symbol, and proceed to get all transactions from recieved blocks
-                if(count == $scope.number_of_blocks_to_display || chain_index+1 == height){
-                    $scope.hideloader();
-
-                    $scope.trans = [];
-                    for(var i=0; i<$scope.trans2.length; i++){
-                        $scope.trans = $scope.trans.concat($scope.trans2[i]);
-                    }
-                    // after all the block information is ready, $scope.range is initialized which is used in ng-repeat to itterate through all blocks, initialzed now to maintain smooth animation
-                    $scope.range = [0,1,2,3,4,5,6,7,8,9,10];
-                    setTimeout(function() { $scope.info = $scope.info2; $scope.$apply(); }, 40);
-                    // once all the transactions are loaded, then we broadcast the information to the Transaction controller that will use it to display the information
-                    setTimeout(function() {SHARE_INFORMATION.load_broadcast_transactions($scope.trans); }, 60);
-                }
-                array_location++;
-            }
-
-        }
-
-        // array used to keep track of 10 most recent blocks, if more than 10 would like to be dislpayed at a time, change $scope.number_of_block_to_display and $scope.range in $scope.update()
-        if(ledgerData.blocks.length > 10)
-            $scope.number_of_blocks_to_display = 10;
-        else
-            $scope.number_of_blocks_to_display = ledgerData.length;
-        $scope.info = new Array($scope.number_of_blocks_to_display);
-
-        // will be used to keep track of most recent transactions, initially array of objects with transcations from each block, in the end concated to $scope.trans with a single transaction at each index
-        $scope.trans2 = new Array($scope.number_of_blocks_to_display);
-
-        // broadcast reciever get chain information from CURRENT controller that initially calls http request, once height is known, specific blocks begin to be retrieved in $scope.update()
-        $scope.$on("handle_broadcast",function(){
-            $scope.size = SHARE_INFORMATION.chain.height.low;
-            // if 0, then it's the initial startup of the controller, only run at the beggining once to get information
-            if($scope.initial == 0){
-                $scope.initial++;
-                $scope.update($scope.size-1);
-            }
-        });
-        $scope.$on("handle_broadcast_upd",function(){
-            $scope.size = SHARE_INFORMATION.chain.height.low;
-            $scope.update($scope.size-1);
-        });
-
-        // updates selected block number and displays form with transaction info based on selection
-        $scope.Update_selected_block = function(idx){
-            //$scope.selected = x;
-            $scope.infoc = angular.copy($scope.info[idx]);
-            $scope.infoc.blockNum  = $scope.size - idx -1;
-            // document.forms["change2"].submit();
-            $scope.showLayer = true;
-        }
-        $scope.closeLayer = function () {
-            $scope.showLayer = false;
-        }
-        if(!$scope.info) {
-            $scope.info = [];
-        }
-
-    }
-)
 
 App.controller("TRANSACTIONS",
     function(SHARE_INFORMATION, $scope,REST_SERVICE_GET){
@@ -2494,8 +2771,8 @@ App.controller("TRANSACTIONS",
         $scope.Channel = "";
         REST_SERVICE_GET.getData("/api/v1/channelName","").then(function(data){
             if(data.length ==0){
-                alert("请先创建channel");
-                window.location.href ="/channelManager";
+                alert("请先创建管道");
+                window.location.href ="/channelManager?createChannel=true";
                 return;
             }
             $scope.Channel =data;
@@ -2503,7 +2780,7 @@ App.controller("TRANSACTIONS",
             REST_SERVICE_GET.getData("/getCurrentChannel","").then(function(data){
                 console.log(data);
                 if(data.code ==100){
-                    alert("请先创建channel")
+                    alert("请先创建管道")
                 }else {
                     $scope.selectChannel = data.data;
                 }

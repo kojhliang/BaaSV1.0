@@ -21,12 +21,18 @@ mysqlUnit.prototype.query=function(sql,params,callback){
             callback(err,null,null);
         }else{
             var query =conn.query(sql,params,function(qerr,results,fields){
+                console.log("****execute sql:"+query.sql);
+                console.log("****error:"+qerr);
+                console.log("****results:");
+                console.log(results);
+                //console.log("****fields:");
+                //console.log(fields);
                 //释放连接
                 conn.release();
                 //事件驱动回调
                 callback(qerr,results,fields);
             });
-            console.log(query.sql);
+
         }
     });
 };

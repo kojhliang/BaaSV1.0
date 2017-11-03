@@ -57,18 +57,20 @@ limitations under the License.-->
                         <label>结束时间:</label><input id="endDate" type="text" onfocus="WdatePicker()" class="date" />
                     </li>
                     <li>
-                        <label>用户:</label><input type="text" />
+                        <label>管道ID:</label><input  id="channelId" type="text" />
                     </li>
                     <li>
                         <label>操作:</label><!--
                         --><select id="operation" class="select-box">
                             <option value="">-----请选择-----</option>
-                            <option value="部署">-----部署------</option>
-                            <option value="执行">-----执行------</option>
+                            <option value="创建管道">-----创建管道------</option>
+                            <option value="部署合约">-----部署合约------</option>
+			    <option value="执行合约">-----执行合约------</option>
+			    <option value="升级合约">-----升级合约------</option>
                         </select>
                     </li>
                     <li>
-                        <label>传入参数:</label><input type="text" />
+                        <label>传入参数:</label><input  id="params"  type="text" />
                     </li>
                     <li>
                         <label>事务ID:</label><input id="transactionId" type="text" />
@@ -94,7 +96,7 @@ limitations under the License.-->
 					<td class="title-2">时间</td>
 					<!--<td>用户</td>-->
 					<td class="title-3">操作</td>
-					<td class="title-4">链码ID</td>
+					<td class="title-4">合约名:版本</td>
                     <td class="title-2">事务ID</td>
                     <td class="title-2">所属管道</td>
 					<td  class="title-2">传入参数</td>
@@ -107,7 +109,7 @@ limitations under the License.-->
                 <td class="content-3">{{data.operation}}</td>
                 <td class="content-4">{{data.chaincodeId}}</td>
                 <td class="content-2">{{data.transactionId}}</td>
-                <td class="content-2">ooAED1</td>
+                <td class="content-2">{{data.channelId}}</td>
                 <td class="content-2" ng-bind-html="data.params |trustHtml"></td>
                 </tr>
                 <tr class="detail-pagination">

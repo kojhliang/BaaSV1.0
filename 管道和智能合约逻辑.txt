@@ -1,0 +1,110 @@
+对于balance-transfer后台：
+
+（1）创建管道逻辑：  
+  步骤：
+    1.创建管道 createchannel （create-channel.js）
+       逻辑：
+       1.调用shell脚本产生channel.tx   （新增部分）  function setChannelConfig()
+       2.构造request请求，调用fabric的nodejs sdk接口去创建管道  funciton createChannelByChannelConfig()
+       3.如果成功创建管道，channelOrg对象把产生所有组织的channel对象，并且设置好全局变量channels。（新增部分）          function setGloboalChannelsObject()
+
+ （3）加入管道逻辑  (join-channel.js)
+      步骤：
+      1.根据组织名，管道名和要加入peers（属于某一个组织），构造request请求，包括 目标peers对象，txid和创始区块，
+      2. 调用fabric的nodejs sdk接口去把某一个组织的peers列表加入管道
+
+
+    
+2.explorer_1后台的创建或修改管道逻辑  (channel-server.js  script.js)
+  （包括创建管道和把peer加入管道,先调好所有sdk接口，再插入数据库。)
+     步骤：
+   第一步：根据用户输入的管道名和peers列表查询数据库，得到初始化参数channelOrg和arr_orgName  function setInitParams()
+
+   第二步：创建管道  function createChannelByChannelName()
+       1.如果type为new：
+          1.1则调用peerintf接口去调用balance-transfer后台的createchannel接口。
+          1.2 如果创建失败，直接返回错误信息的response给angularjs的script.js去处理，最终返回提示信息给前台页面。
+             如果创建成功，进入第三步加入管道
+       2.如果type为edit：
+          2.1直接跳过这一步，进入下一步
+
+   第三步：加入管道,如果peers列表所属有多个组织，函数内容需要用到循环promist顺序执行    function joinChannelByPeersList()  
+       1.根据用户选择的peer列表和管道名，调用balance-transfer后台的加入管道逻辑。如果有多个组织，要多次调用
+         balance-transfer后台的加入管道逻辑，同时传参的时候传入不同的组织名。
+
+   第四步：写入相应的数据库记录   functino writeDataBaseRecord()
+       1.根据新增还是修改管道，初始化channelId和channel_sql
+       2.执行插入或修改channel表记录
+       3.根据新增或修改channel表记录得到的channelId和peerIdArray，构造channelPeernode_sql和channelOrg_sql
+       4.执行插入channel_org表和channel_peernode表的记录
+
+
+
+3.explorer_1后台的安装智能合约逻辑 （chaincode-server.js script.js）
+     步骤：
+   第一步： 根据用户选择的智能合约，管道名和需要安装的peers列表，查询出对应的每个组织的peers列表channelOrg  function setInitParams()
+
+    第二步：  然后根据channelOrg用循环promise顺序执行installchaincode函数。     function installChaincodeByOrgPeers(orgPeers[])
+   
+    第三步：  installChaincodeByOrgPeers函数包含两部分内容：
+             2.1调用peerintf接口去调用balance-transfer后台的install-chaincode接口实现给某个组织的peers安装智能合约。    function installChaincode(org,peers)
+                    这里需要涉及两层for循环，一层是某个组织下peers，另一个是peers里每个peer的安装情况，因为可能会出现安装peer1，peer2，只成功了peer2的情况。
+             2.2 如果安装成功，执行插入数据库记录，更新deploychaincode的installPeers字段,对installPeers字段执行的是不断添加数据更新。  function writeDataBaseRecord()
+                 如果安装失败，直接返回错误信息的response给angularjs的script.js去处理，最终返回提示信息给前台页面。
+
+   注意：安装智能合约本质是在balance-transfer后台的目录里找到chaincode的代码上传到指定的peer容器，而gopath的设置，在helper.js里的以下代码设定：  
+var setupChaincodeDeploy = function() {
+	process.env.GOPATH = path.join(__dirname, hfc.getConfigSetting('CC_SRC_PATH'));
+};
+
+
+4.explorer_1后台的初始化智能合约逻辑 （chaincode-server.js script.js）
+        步骤：
+    第一步： 根据用户选择的智能合约，管道名，调用peerintf接口去调用balance-transfer后台的instantiate-chaincode接口实现初始化智能合约。
+    第二步：如果初始化成功，更新deploychaincode表的Params和endorsePolicy和Status字段。
+           如果安装失败，直接返回错误信息的response给angularjs的script.js去处理，最终返回提示信息给前台页面。
+     
+
+5.explorer_1后台的升级智能合约逻辑 （chaincode-server.js script.js）
+      步骤：
+  第一步：根据用户选择的智能合约，管道名，版本号，调用peerintf接口去调用balance-transfer后台的install-chaincode接口去安装新版本的智能合约。
+           继续安装其他的peer节点。
+           注意：这里要先更新deploychaincode表的fk_uploadchaincode_id字段为用户选择的智能合约，才能去调用install接口。
+  第二步：然后再调用peerintf接口去调用balance-transfer后台upgrade-chaincode接口实现升级智能合约。
+  第三步：如果升级成功，在deploychaincode表插更新的记录。并且写入升级合约版本日志。
+          如果升级失败，直接返回错误信息的response给angularjs的script.js去处理，最终返回提示信息给前台页面。
+  这里有个问题，如果没有新增的安装的实例是无法升级的。所以要先安装智能合约之后，才能升级智能合约。
+
+
+ 每次都要改balance-transfer对应的后台：
+
+
+
+
+
+大数据跳板机_MAG_2519
+10.0.25.19
+Windows 2008
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+

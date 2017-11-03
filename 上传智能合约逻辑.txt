@@ -1,0 +1,28 @@
+注意：
+为了实现explorer项目和balance-transfer项目的文件共享，这两个项目必须放在同一台主机上。
+balance-transfer项目要在linux机器上才能运行，所以explorer项目也要部署到linux机器进行测试.
+
+
+1.在explorer项目通过增加一个配置参数blockchain_backend参数来配置balance-transfer项目的智能合约的src目录。
+2.用户选择完本地文件后（一个或者多个go文件的zip包），点击上传，先上传到temp目录，然后调用fs模块复制文件到
+    src/userchaincode/10位随机数字的目录下
+3.如果是zip包，解压里面的内容，如果只是单个文件，则不用解压。解压完后，找出main.go文件，进行go build的编译，
+  如果有错误，返回错误信息给前端页面。如果没有，进入下一步。
+
+4.插入相关记录到uploadchaincode表里。
+
+   会涉及的参数列表：
+  (1)uploadFolder 用户在页面上面的文件，首先会放到这个文件夹下
+  config.uploadFolder = '/opt/fabric-0.6/upload'; 
+ 
+ （2）zipFolder，解压和main.go存放的目录  （中转文件加）
+   config.zipFolder = "/opt/fabric-0.6/unzip";
+
+ （3）user_chaincode_Path  balance-transfer后台安装智能合约时会访问的src目录
+  user_chaincode_Path :"/home/ucsmy/fabic/balance-transfer-1.0.2/balance-transfer/artifacts/src/user_chaincode"
+
+ （4）进行go语法检测会需要go build编译，go build正常运行需要设定一个正确的gopath目录
+  gopath : "/usr/local/gopath",
+  
+ （5）进行go语法检测会需要go build编译，go build 要指定一个二进制可执行文件输出目录
+   goBuildFolder :"/usr/local/goBuild",

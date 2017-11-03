@@ -42,6 +42,42 @@ limitations under the License.-->
 	<title> 网金BaaS平台管理后台 </title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script type="text/javascript">
+	
+
+	 function UrlSearch() 
+   {
+   var name,value; 
+   var str=location.href; 
+ 
+   var num=str.indexOf("?"); 
+   str=str.substr(num+1); 
+   var arr=str.split("&"); 
+   for(var i=0;i < arr.length;i++){ 
+    num=arr[i].indexOf("="); 
+    if(num>0){ 
+     name=arr[i].substring(0,num);
+     value=arr[i].substr(num+1);
+     this[name]=value;
+     } 
+    } 
+   } 	
+	 var Request=new UrlSearch(); 
+	   if(Request.createChannel!=null||Request.createChannel=="")
+	   {
+			if(Request.createChannel=="true"){	
+			if($('#channel', window.parent.document).parents('.item').attr("class") == "item")
+			 {  
+			 $('#channel', window.parent.document).parents('.item').toggleClass('down');
+			 }
+			   $('.left-sidebar', window.parent.document).find('a').removeClass('active');
+			   $('#channelManager', window.parent.document).addClass('active');
+			  
+			}
+		}
+ 
+ </script>
+ 
 </header>
 
 <body ng-controller="CHANNEL_MANAGER">
@@ -98,34 +134,10 @@ limitations under the License.-->
 <!-- 加入的组织列表弹层 start -->
 <dialog id="follow-dialog-3" style="display:none;" dialogtitle="加入的组织列表" littletitle="管道名：mychannel"></dialog>
 <!-- 加入的组织列表弹层 end -->
-<!--新增管道弹窗 start-->
-<div class="grey-background"></div>
-<div id="create-peer-layer" class="alert-layer deploy-general uploadContract-layer">
-    <h3 class="alert-title">
-        <span>新增管道</span>
-        <a href="javascript:;" class="alert-close click-close" id="upload-close">×</a>
-    </h3>
-    <div class="alert-content" style="height:294px;">
-        <form method="post" enctype="multipart/form-data" id="form">
-            <div class="alert-text">
-                <div>
-                    <label>管道名字：</label>
-                    <input type="text" name="name">
-                </div>
-                <div class="mt25">
-                    <label>选择加入管道的节点：</label>
-                    <div id="peerTree" class="ztree"></div>
-                </div>
-            </div>
-            <div class="footer clearfix">
-                <button class="uploadStyle"><i class="fa fa-uploadContract"></i>新增管道</button>
-            </div>
-        </form>
-    </div>
-</div>
-<!--新增管道弹窗 end-->
 
-<!--修改管道弹窗 start-->
+<div class="grey-background"></div>
+
+<!--新增和修改管道弹窗 start-->
 <div id="edit-peer-layer" class="alert-layer deploy-general edit-peer-layer">
     <h3 class="alert-title">
         <span>{{title}}</span>
@@ -136,7 +148,9 @@ limitations under the License.-->
             <div class="alert-text">
                 <div class="list-item">
                     <label>管道名字：</label>
-                    <input type="text" name="name" ng-model="channelName">
+
+                    <input type="text" ng-show="type == 'edit'" name="name" ng-model="channelName" readonly="readonly">
+		    <input type="text" ng-show="type == 'add'" name="name" ng-model="channelName" >
                 </div>
                 <div class="list-item mt25">
                     <label>选择加入管道的节点：</label>
@@ -144,8 +158,15 @@ limitations under the License.-->
                 </div>
             </div>
 
+	    <input type="hidden" name="pkId" ng-model="pkId">
+
             <div class="save-btn-wrap clearfix">
-                <button class="save-btn" ng-click="createChannel()"><i class="fa fa-save"></i>&nbsp;保存</button>
+
+                <button class="open-resultLayer" ng-if="type == 'edit'" ng-click="editChannel()"><i class="fa fa-save"></i>&nbsp;保存</button>
+		<button class="open-resultLayer" ng-if="type == 'add'" ng-click="createChannel()"><i class="fa fa-save"></i>&nbsp;新增</button>
+
+                <button class="disabledStyle" ng-if="type == 'edit'" type="submit" name="button"><i class="fa fa-uploadingIcon"></i>保存中..</button>
+		<button class="disabledStyle" ng-if="type == 'add'" type="submit" name="button"><i class="fa fa-uploadingIcon"></i>新增中..</button>
             </div>
         </form>
     </div>
@@ -172,7 +193,8 @@ limitations under the License.-->
             <p>原因：<span id="retMsg"></span></p>
         </div>
         <div class="alert-button">
-            <button class="result-close" type="submit" name="button" data-action=".result-layer, .grey-background2">确认</button>
+            <!--<button class="result-close" type="submit" name="button" data-action=".result-layer, .grey-background2">确认</button>-->
+	    <button class="result-close" type="submit" name="button" ng-click="closeAlertLayer()">确认</button>
         </div>
     </div>
 </div>

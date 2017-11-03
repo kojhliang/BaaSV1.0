@@ -166,6 +166,17 @@
 	
 	
 	var getChannelByPeerId = function(req, res, next) {
+		//要直接调区块链接口去查询才能准确
+        var peerId = req.params.peerId;
+        var sql = "select b.channelName \
+						from channel_peernode a \
+						inner join channel b \
+						on b.pk_id = a.channelId \
+						where a.peernodeID =" + peerId;
+        mysql.query(sql, [], function(err, result, field){
+            res.send(result);
+        });
+		/*
 		try {
 			var peerId = req.params.peerId;
 			var sql = "select b.channelName \
@@ -179,7 +190,7 @@
 		} catch(e) {
 			console.log("error getChannelsByPeerId: " + e);
 			res.send({});
-		}
+		}*/
 	};
 	exports.getChannelByPeerId = getChannelByPeerId;
 	

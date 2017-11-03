@@ -152,7 +152,7 @@ var getChainInfo = function(peer, username, org,channelName ) {
     console.log("!!!!!!!channelName = "+channelName);
 	var target = buildTarget(peer, org);
     var channel = helper.getChannelForOrg(channelName,org);//edit by lmh 20170904,content:add channelName param
-    console.log("!!!!!!!channel = "+channel);
+    //console.log("!!!!!!!channel = "+channel);
 	return helper.getRegisteredUsers(username, org).then((member) => {
 		return channel.queryInfo(target);
 	}, (err) => {

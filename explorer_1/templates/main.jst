@@ -9,6 +9,7 @@
     <script src = "/angular.min.js"></script>
     <script src = "/angular-sanitize.min.js"></script>
     <script type="text/javascript">
+
         $(function () {
             $('.bg-icon').click(function () {
                 var parent = $(this).parents('.item');
@@ -25,40 +26,44 @@
             $('.close').click(function(){
                 $(".alert-layer,.grey-background").hide();
             });
+		
+			
         });
         function iframe(){
             var wh=$(window).height();
             $("#main_iframe").height(wh-80)
         }
+		
+
     </script>
 </head>
-<body>
+<body ng-controller="MAINPAGE">
 <div class="header">
     <div class="fixed">
         <div class="logo"><img src="/logo.png" alt=""></div>
         <!--<div class="user-info"><img src="/face.png" alt="">你好！</div>-->
     </div>
 </div>
-<div class="main-body">
+<div class="main-body" >
     <div class="left-sidebar" id="navigation">
         <div class="item down">
             <div class="line"></div>
             <div class="title"><i class="icon-left icon-1"></i><span>区块链信息</span><i class="bg-icon"></i></div>
             <div class="content">
                 <ul>
-                    <li><a href="/blockquery" class="active" target="main_iframe">区块查询</a></li>
+                    <li><a href="/blockquery"  class="active" target="main_iframe">区块查询</a></li>
                     <li><a href="/networkpeer" target="main_iframe">网络环境</a></li>
                     <li><a href="/transactionquery"  target="main_iframe">交易记录</a></li>
                     <li><a href="/statisgraph" target="main_iframe">统计图表</a></li>
                 </ul>
             </div>
         </div>
-	 <div class="item">
+	 <div id="channelDiv" class="item">
             <div class="line"></div>
-               <div class="title"><i class="icon-left icon-2"></i><span>管道</span><i class="bg-icon"></i></div>
+               <div class="title"><i class="icon-left icon-2"></i><span>管道</span><i id="channel" class="bg-icon"></i></div>
             <div class="content">
             <ul>
-            <li><a href="/channelManager" target="main_iframe">管道管理</a></li>
+            <li><a id="channelManager" href="/channelManager" target="main_iframe">管道管理</a></li>
             </ul>
             </div>
         </div>

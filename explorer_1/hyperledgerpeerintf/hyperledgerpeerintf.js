@@ -20,14 +20,14 @@ var HyperledgerPeerIntf = function() {
 	 console.log("hyperLedgerRESTEndpoint"+hyperLedgerRESTEndpoint);
 	var async = require('async');
 	var request = require('request');
-	var bearer = null;
-	
-	this.restCallBefore = function(callback) {
+	//var bearer = null;
+	/*
+	this.restCallBefore = function(callback,orgName) {
 		
 		request.post(hyperLedgerRESTEndpoint+"/users", 
 			{
 				"json": true,
-				"body": {"username": config.username,"orgName": config.orgName}
+				"body": {"username": config.username,"orgName": orgName}
 			},
 			function(error, response, body){
 				console.log("error: " + error + " response: " + response + " body: " + body);
@@ -35,9 +35,9 @@ var HyperledgerPeerIntf = function() {
 				callback();
 		});
 		
-	}
+	}*/
 	
-	this.restCallExecutor = function(uri,completion) {
+	this.restCallExecutor = function(bearer,uri,completion) {
 		var obj;
 		async.series( [function (callback) {
 			
@@ -78,20 +78,36 @@ var HyperledgerPeerIntf = function() {
 		
 	}
 
-	this.restCall = function(uri,completion) {
+	this.restCall = function(uri,completion,orgName) {
 		
 		var me = this;
-		
+		/*
 		if(bearer == null) {
 			this.restCallBefore(function(){
-				me.restCallExecutor(uri,completion);	
-			});
+				me.restCallExecutor(uri,completion);
+			},orgName);
 		} else {
-			this.restCallExecutor(uri,completion);	
-		}
+			this.restCallExecutor(uri,completion);
+		}*/
+		var bearer="";
+        request.post(hyperLedgerRESTEndpoint+"/users",
+            {
+                "json": true,
+                "body": {"username": config.username,"orgName": orgName}
+            },
+            function(error, response, body){
+                console.log("error: " + error  );
+               // console.log(response);
+                console.log("body: ");
+                console.log(body);
+                bearer = "Bearer " + body.token;
+                me.restCallExecutor(bearer,uri,completion);
+                //callback();
+            });
+
 	}
 	
-	this.restPostJsonCallExecutor = function(uri,form,completion) {
+	this.restPostJsonCallExecutor = function(bearer,uri,form,completion) {
 		var obj;
         let option = {
             url: hyperLedgerRESTEndpoint+uri,
@@ -100,13 +116,15 @@ var HyperledgerPeerIntf = function() {
             body: form,
 			headers: {
 				'authorization': bearer
-			}
+			},
+            timeout:300000
         };
         async.series( [
 			function (callback) {
                 console.log( ' Querying Hyperledger ' ,hyperLedgerRESTEndpoint+uri);
                 request(option, function (error, response, body) {
-                    console.log(body);
+                    console.log("error = "+error);
+                    console.log("body = "+body);
                     if (!error && response.statusCode == 200) {
                         if(body == null)
                             callback(null,null);
@@ -119,7 +137,7 @@ var HyperledgerPeerIntf = function() {
                     } else {
                         console.log("hyperLedgerRESTEndpoint connect failed,change another");
                         server.changeURL();
-                        console.log("error = "+error);
+
                         callback(error);
                         //throw error;
                     }
@@ -134,25 +152,62 @@ var HyperledgerPeerIntf = function() {
         );
 	}
 
-    this.restPostJsonCall = function(uri,form,completion) {
+    this.restPostJsonCall = function(uri,form,completion,orgName) {
 		var me = this;
-		
+		/*
 		if(bearer == null) {
 			this.restCallBefore(function(){
-				me.restPostJsonCallExecutor(uri,form,completion);	
-			});
+				me.restPostJsonCallExecutor(uri,form,completion);
+			},orgName);
 		} else {
-			this.restPostJsonCallExecutor(uri,form,completion);	
-		}
-		
-        
+			this.restPostJsonCallExecutor(uri,form,completion);
+		}*/
+        var bearer="";
+        request.post(hyperLedgerRESTEndpoint+"/users",
+            {
+                "json": true,
+                "body": {"username": config.username,"orgName": orgName}
+            },
+            function(error, response, body){
+               if(error==null){
+                   console.log("error: " + error  );
+                   //console.log(response);
+                   console.log("body: ");
+                   console.log(body);
+                   bearer = "Bearer " + body.token;
+                   me.restPostJsonCallExecutor(bearer,uri,form,completion);
+                   //callback();
+               }
+               else{
+                   console.log("****获取token出错！");
+               }
 
+            });
     }
 }
 
 
+//查找加入某个管道的第一个组织的sql
+find_org_sql="select a.channelId as channelId,c.pk_Id as orgId,c.orgName as orgName from channel_org a,channel b,org c where a.channelId=b.pk_Id and a.orgId=c.pk_Id and b.isOk=1 and b.channelName=? order by c.pk_Id asc";
+
 HyperledgerPeerIntf.prototype.chain = function(channelName, callBk) {
-	this.restCall('/channels/' + channelName+'?peer=peer1', callBk);
+    var me=this;
+    var orgName="";
+    var channelId="";
+    var orgId="";
+    //console.log("****************777777channelName : "+channelName);
+    mysql.query(find_org_sql,channelName,function(err,results,fields) {
+        //console.log("**************777777results : ");
+        //console.log(results);
+        if (results != null && results.length!=0) {
+            orgName= results[0].orgName;
+            channelId=results[0].channelId;
+            orgId=results[0].orgId;
+            mysql.query("select b.PeerId as peerId from channel_peernode a,peernode b where a.peernodeID=b.pk_Id and b.fk_org_Id="+orgId+" and a.channelId="+channelId,"",function(err,results,fields) {
+                me.restCall('/channels/' + channelName + '?peer='+results[0].peerId, callBk, orgName);
+            });
+        }
+    });
 }
 
 /*
@@ -163,11 +218,21 @@ HyperledgerPeerIntf.prototype.peers = function(callBk) {
 */
 
 HyperledgerPeerIntf.prototype.block = function(channelName, blockNum, callBk) {
-	this.restCall('/channels/' + channelName + '/blocks/' + blockNum, callBk);
+    var me=this;
+    mysql.query(find_org_sql,channelName,function(err,results,fields) {
+        if (results != null) {
+            me.restCall('/channels/' + channelName + '/blocks/' + blockNum, callBk, results[0].orgName);
+        }
+    });
 }
 
 HyperledgerPeerIntf.prototype.transactions = function(channelName,uuid,callBk) {
-	this.restCall('/channels/'+channelName+'/transactions/'+uuid+"?peer=peer1",callBk);
+    var me=this;
+    mysql.query(find_org_sql,channelName,function(err,results,fields){
+    	if(results!=null){
+            me.restCall('/channels/'+channelName+'/transactions/'+uuid+"?peer=peer1",callBk,results[0].orgName);
+        }
+    });
 }
 
 /*
@@ -254,7 +319,7 @@ HyperledgerPeerIntf.prototype.invoke = function(money,callBk) {
     this.restPostJsonCall('/chaincode/',param,callBk);
 }
 
-HyperledgerPeerIntf.prototype.query = function(user,callBk) {
+HyperledgerPeerIntf.prototype.query = function(user,callBk,orgName) {
     var username = server.getLoginUser();
     console.log("query "+user);
     let param ={
@@ -272,23 +337,31 @@ HyperledgerPeerIntf.prototype.query = function(user,callBk) {
         },
         "id": 5
     };
-    this.restPostJsonCall('/chaincode/',param,callBk);
+    this.restPostJsonCall('/chaincode/',param,callBk,orgName);
 }
 
-HyperledgerPeerIntf.prototype.createChannel = function(param, callBk) {
-	this.restPostJsonCall('/channels/', param, callBk);
+HyperledgerPeerIntf.prototype.createChannel = function(param, callBk,orgName) {
+	this.restPostJsonCall('/channels/', param, callBk,orgName);
 }
 
-HyperledgerPeerIntf.prototype.joinChannel = function(param, callBk){
-	this.restPostJsonCall('/channels/' + param.channelName + "/peers", param.peers, callBk);
+HyperledgerPeerIntf.prototype.joinChannel = function(param, callBk,orgName){
+	this.restPostJsonCall('/channels/' + param.channelName + "/peers", param.peers, callBk,orgName);
 }
 
-HyperledgerPeerIntf.prototype.installPeer = function(param, callBk) {
-	this.restPostJsonCall('/chaincodes/', param, callBk);
+HyperledgerPeerIntf.prototype.installPeer = function(param, callBk,orgName) {
+	this.restPostJsonCall('/chaincodes/', param, callBk,orgName);
 }
 
-HyperledgerPeerIntf.prototype.instantiate = function(param, callBk) {
-	this.restPostJsonCall('/channels/' + param.channelName +"/chaincodes", param.param, callBk);
+HyperledgerPeerIntf.prototype.instantiate = function(param, callBk,orgName) {
+	this.restPostJsonCall('/channels/' + param.channelName +"/chaincodes", param.param, callBk,orgName);
+}
+
+HyperledgerPeerIntf.prototype.upgrade = function(param, callBk,orgName) {
+    this.restPostJsonCall('/channels/' + param.channelName +"/upgrade/chaincodes", param.param, callBk,orgName);
+}
+
+HyperledgerPeerIntf.prototype.queryChainByPeer = function(param, callBk,orgName) {
+    this.restCall('/channels/?peer=' + param.peerName , callBk,orgName);
 }
 
 module.exports = new HyperledgerPeerIntf();

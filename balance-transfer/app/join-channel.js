@@ -28,6 +28,23 @@ var logger = helper.getLogger('Join-Channel');
 var ORGS = helper.ORGS;
 var allEventhubs = [];
 
+
+function printMap(map)
+{
+    var str=""
+    for(var item in map) {
+        var type=Object.prototype.toString.call(map[item]);
+        if(type=="[object Object]")
+        {
+            str=str+item+":"+printMap(map[item])+",";
+        }
+        else
+        {
+            str=str+item+":"+map[item]+",";
+        }
+    }
+    return str;
+}
 //
 //Attempt to send a request to the orderer with the sendCreateChain method
 //
@@ -79,6 +96,7 @@ var joinChannel = function(channelName, peers, username, org) {
 			allEventhubs.push(eh);
 		}
 
+		//这里类似实现了go语言写的block-listen-tls的事件监听。通过监听事件端口，来判断发送的请求是否成功执行。
 		var eventPromises = [];
 		eventhubs.forEach((eh) => {
 			let txPromise = new Promise((resolve, reject) => {
@@ -102,13 +120,15 @@ var joinChannel = function(channelName, peers, username, org) {
 			eventPromises.push(txPromise);
 		});
 
+
 		// add peers into channel   lmh 20170904
        var ORGS=helper.getOrgs();//get all org
       for (let key in peers) {
       	  var peerName=peers[key];
           logger.debug("key:"+key+"*********");
           logger.debug("peerName:"+peerName+"*********");
-          logger.debug("ORGS[org].peers[peerName]:"+ORGS[org].peers[peerName]+"*********");
+          logger.debug("org:"+org+"*********");
+          logger.debug("ORGS[org].peers[peerName]:"+printMap(ORGS[org].peers[peerName])+"*********");
         let data = fs.readFileSync(path.join(__dirname, ORGS[org].peers[peerName]['tls_cacerts']));
         let peer = client.newPeer(
             ORGS[org].peers[peerName].requests,
@@ -143,6 +163,13 @@ var joinChannel = function(channelName, peers, username, org) {
 					'Successfully joined peers in organization %s to the channel \'%s\'',
 					org, channelName)
 			};
+			//打印当前channel的状况：
+            logger.debug("****************************成功加入管道后的channels对象，channels["+channelName+"]:");
+            logger.debug(channel);
+            logger.debug(channel._peers);
+            logger.debug(channel._orderers);
+            logger.debug(channel._clientContext);
+            logger.debug(channel._msp_manager);
 			return response;
 		} else {
 			logger.error(' Failed to join channel');
@@ -150,11 +177,20 @@ var joinChannel = function(channelName, peers, username, org) {
 			throw new Error('Failed to join channel');
 		}
 	}, (err) => {
-		logger.error('Failed to join channel due to error: ' + err.stack ? err.stack :
+		logger.error('Failed to join channel due to error: ' +
 			err);
 		closeConnections();
-		throw new Error('Failed to join channel due to error: ' + err.stack ? err.stack :
+		throw new Error('Failed to join channel due to error: ' +
 			err);
-	});
+	}).catch(function(reason_str){
+        console.log('*****************rejected**************');
+        console.log(reason_str);
+        var str=""+reason_str;
+        let response = {
+            success: false,
+            message: 'peers:'+peers+' of org: '+org + ' join channel \'' + channelName + '\'  faild!Reason:'+str
+        };
+        return response;
+    });;
 };
 exports.joinChannel = joinChannel;

@@ -14,8 +14,6 @@
  *  limitations under the License.
  */
 'use strict';
-var log4js = require('log4js');
-var logger = log4js.getLogger('SampleWebApp');
 var express = require('express');
 var session = require('express-session');
 var cookieParser = require('cookie-parser');
@@ -32,6 +30,7 @@ require('./config.js');
 var hfc = require('fabric-client');
 
 var helper = require('./app/helper.js');
+var logger = helper.getLogger('app');
 var channels = require('./app/create-channel.js');
 var join = require('./app/join-channel.js');
 var install = require('./app/install-chaincode.js');
@@ -224,11 +223,13 @@ app.post('/channels/:channelName/chaincodes', function(req, res) {
 	var channelName = req.params.channelName;
 	var fcn = req.body.fcn;
 	var args = req.body.args;
+    var peerId = req.body.peerId;
 	logger.debug('channelName  : ' + channelName);
 	logger.debug('chaincodeName : ' + chaincodeName);
 	logger.debug('chaincodeVersion  : ' + chaincodeVersion);
 	logger.debug('fcn  : ' + fcn);
 	logger.debug('args  : ' + args);
+    logger.debug('peerId  : ' + peerId);
 	if (!chaincodeName) {
 		res.json(getErrorMessage('\'chaincodeName\''));
 		return;
@@ -245,7 +246,7 @@ app.post('/channels/:channelName/chaincodes', function(req, res) {
 		res.json(getErrorMessage('\'args\''));
 		return;
 	}
-	instantiate.instantiateChaincode(channelName, chaincodeName, chaincodeVersion, fcn, args, req.username, req.orgname)
+	instantiate.instantiateChaincode(channelName, chaincodeName, chaincodeVersion, fcn, args, req.username, req.orgname,peerId)
 	.then(function(message) {
 		res.send(message);
 	});
@@ -258,11 +259,14 @@ app.post('/channels/:channelName/upgrade/chaincodes', function(req, res) {
 	var channelName = req.params.channelName;
 	var fcn = req.body.fcn;
 	var args = req.body.args;
+    var peerId = req.body.peerId;
 	logger.debug('channelName  : ' + channelName);
 	logger.debug('chaincodeName : ' + chaincodeName);
 	logger.debug('chaincodeVersion  : ' + chaincodeVersion);
 	logger.debug('fcn  : ' + fcn);
 	logger.debug('args  : ' + args);
+    logger.debug('peerId  : ' + peerId);
+    console.log('********************peerId  : ' + peerId)
 	if (!chaincodeName) {
 		res.json(getErrorMessage('\'chaincodeName\''));
 		return;
@@ -279,7 +283,7 @@ app.post('/channels/:channelName/upgrade/chaincodes', function(req, res) {
 		res.json(getErrorMessage('\'args\''));
 		return;
 	}
-	upgrade.upgradeChaincode(channelName, chaincodeName, chaincodeVersion, fcn, args, req.username, req.orgname)
+	upgrade.upgradeChaincode(channelName, chaincodeName, chaincodeVersion, fcn, args, req.username, req.orgname,peerId)
 	.then(function(message) {
 		res.send(message);
 	});
@@ -440,7 +444,7 @@ app.get('/chaincodes', function(req, res) {
 		res.send(message);
 	});
 });
-// Query to fetch channels
+// Query to fetch channels by peerName
 app.get('/channels', function(req, res) {
 	logger.debug('================ GET CHANNELS ======================');
 	logger.debug('peer: ' + req.query.peer);
@@ -495,4 +499,10 @@ app.get('/allchannels', function(req, res) {
 		res.send(message);
 
 });
+/*
+setInterval(function(){
+    var orgclient=helper.getClientForOrg('org2');
+    logger.debug(orgclient);
+},10000);
+*/
 

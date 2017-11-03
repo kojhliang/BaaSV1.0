@@ -5,7 +5,7 @@
    "channelName":"mychannel",
    "CC_SRC_PATH":"../artifacts",
    "keyValueStore":"/tmp/fabric-client-kvs",
-   "eventWaitTime":"30000",
+   "eventWaitTime":"300000",
    "admins":[
       {
          "username":"admin",

@@ -124,7 +124,7 @@ limitations under the License.-->
                 <input ng-model="chaincodeVersion" type="text" readonly="true">
             </div>
             <div class="list-item">
-                <p>请选择需要安装智能合约的节点：</p>
+                <p>请选择需要安装智能合约的节点(同个组织下的节点需要全部选择)：</p>
                 <div id="peerTree" class="ztree"></div>
             </div>
             <div class="alert-button">
@@ -150,7 +150,8 @@ limitations under the License.-->
             </div>
             <div class="list-item">
                 <label>实例版本：</label>
-                <input ng-model="chaincodeVersion" type="text" readonly="true">
+                <input ng-model="chaincodeVersion" type="text" readonly="true"  ng-show="!showChainCode">
+		<input ng-model="chaincodeVersion" type="text" placeholder="不能和之前的版本号相同"  ng-show="showChainCode">
 			</div>
 			<div class="list-item">
                 <label>管道名字：</label>
@@ -158,8 +159,7 @@ limitations under the License.-->
             </div>
             <div class="list-item" ng-show="showChainCode">
                 <label>请选择智能合约：</label>
-                <select ng-model="selectChainCode"  ng-options=" x.pk_Id as x.Name for x in deployChainCode">
-                    <option value="">请选择</option>
+                <select ng-model="selectChainCode"  ng-options=" x.pk_Id as x.name for x in deployChainCode">
                 </select>
             </div>
             <div class="list-item">
@@ -177,18 +177,53 @@ limitations under the License.-->
 				</div>
 			</div>
 			<div class="list-item">
+		  <!--
                 <label>背书策略：</label>
 				<input ng-model="endorsePolicy" type="text">
 				<i class="icon icon-problem p10" ng-mouseenter="showTipLayer()">&nbsp;</i>
+				-->
             </div>
             <div class="alert-button">
-                <button class="open-resultLayer" ng-click="commitChaincode()" type="submit" name="button">{{title}}</button>
+                <button class="open-resultLayer" ng-click="commitChaincode()" type="submit" name="button"><i class="fa fa-save"></i>&nbsp;{{title}}</button>
+		<button class="disabledStyle" type="submit" name="button"><i class="fa fa-uploadingIcon"></i>{{title}}中..</button>
+
+		<br><br>注意：{{title}}智能合约时间较长，一般需2到3分钟，请耐心等候。
+
             </div>
         </div>
 
     </div>
 </div>
 <!--初始化 end-->
+
+<div class="grey-background2"></div>
+<!--上传和部署结果弹窗 start-->
+<div class="alert-layer result-layer">
+    <div class="alert-content">
+        <!--上传和部署成功提示-->
+        <div id="resultSuccess" >
+            <h3>
+                <i class="fa fa-result-success"></i>
+                <span id="resultSuccessSpan">上传成功！</span>
+            </h3>
+        </div>
+        <!--上传和部署失败提示-->
+        <div id="resultFail">
+            <h3>
+                <i class="fa fa-result-fail"></i>
+                <span id="resultFailSpan">上传失败！</span>
+            </h3>
+            <p>原因：<span id="retMsg"></span></p>
+        </div>
+        <div class="alert-button">
+            <!--<button class="result-close" type="submit" name="button" data-action=".result-layer, .grey-background2">确认</button>-->
+	    <button class="result-close" type="submit" name="button" ng-click="closeAlertLayer()">确认</button>
+        </div>
+    </div>
+</div>
+<!--上传和部署结果弹窗 end-->
+
+
 <!--升级 start-->
 <div id="update-layer" class="alert-layer deploy-general instance-layer">
     <h3 class="alert-title">
@@ -199,19 +234,20 @@ limitations under the License.-->
         <div class="content-top">
             <div class="list-item">
                 <label>实例名字：</label>
-                <input ng-model="chaincodeName" type="text">
+                <input ng-model="chaincodeName" type="text" readonly="true">
             </div>
             <div class="list-item">
                 <label>版本号：</label>
-                <input  type="text">
+                <input  ng-model="chaincodeVersion" type="text">
 			</div>
 			<div class="list-item">
                 <label>管道名字：</label>
-                <input  type="text">
+                <input ng-model="channelName" type="text" readonly="true">
             </div>
 			<div class="list-item">
                 <label>请选择智能合约：</label>
-                <select ng-model="selectChannel"  ng-options=" x.channelName as x.channelName for x in Channel">
+                <select ng-model="selectChainCode"  ng-options=" x.pk_Id as x.Name for x in deployChainCode">
+                    <option value="">请选择</option>
                 </select>
             </div>
             <div class="list-item">
@@ -228,10 +264,12 @@ limitations under the License.-->
                     <i class="icon icon-delete p10" ng-click="deleteUpdate($index)">&nbsp;</i>
                 </div>
 			</div>
+	         <!--
 			<div class="list-item">
                 <label>背书策略：</label>
 				<input  type="text">
 				<i class="icon icon-problem p10" ng-mouseenter="showTipLayer()">&nbsp;</i>
+				-->
             </div>
             <div class="alert-button">
                 <button class="open-resultLayer" ng-click="deploy()" type="submit" name="button">升级</button>

@@ -39,9 +39,13 @@ router.get('/channel/:channelId/org', channelController.getOrgByChannelId);
 //根据 管道，获取当前部署智能合约信息
 router.get('/channel/:channelId/installedChaincode', channelController.getInstalledChaincodeByChannelId);
 //根据 所选择的节点，创建管道
-router.post('/newChannel/:channelName/peer/:peerId', channelController.newChannel);
+router.post('/newOrEditChannel/:channelName/peer/:peerId/type/:type', channelController.newOrEditChannel);
+//根据 所选择的节点，修改管道，选择其他加入管道的节点
+//router.post('/editChannel/:pkId/peer/:peerId', channelController.editChannel);
 //通过 数据库，获取组织与其属下节点
 router.get('/org/peer', channelController.getOrgAndPeer);
+//通过 数据库，获取加入了某个管道的所有peer节点,用于展示安装合约时的列表
+router.get('/joinChannel/:channelId/peer', channelController.getJoinChannelPeer);
 
 
 /*
@@ -58,7 +62,7 @@ router.post('/installChaincode/:deployChaincodeId/peer/:peerId', chaincodeContro
 //根据 参数 和背书策略，初始化合约
 router.post('/initiateChaincode/:deployChaincodeId/param/:param/policy/:policy', chaincodeController.initiateChaincode);
 //根据 选择新合约，更新
-router.post('/upgradeChaincode/:deployChaincodeId/newChaincode/:newChaincodeId/param/:param', chaincodeController.upgradeChaincode);
+router.post('/upgradeChaincode/:deployChaincodeId/newChaincode/:newChaincodeId/newChaincodeVersion/:newChaincodeVersion/param/:param', chaincodeController.upgradeChaincode);
 /*
 操作日志
 */

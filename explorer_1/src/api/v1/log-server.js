@@ -6,21 +6,27 @@ var mysql = require('../../../hyperledgerpeerintf/mysqlUnit');
 var getLogList = function(req, res, next) {
     var querySql =' 1=1 ';
     if(checkParams(req.query.startDate)){
-        querySql +="and createTime > '"+req.query.startDate+"'";
+        querySql +="and createTime >= '"+req.query.startDate+"'";
     }
     if(checkParams(req.query.endDate)){
-        querySql +="and createTime < '"+req.query.endDate+"'";
+        querySql +="and createTime <= '"+req.query.endDate+"'";
     }
     if(checkParams(req.query.operation)){
         querySql +="and operation='"+req.query.operation+"'";
     }
     if(checkParams(req.query.transactionId)){
-        querySql +="and transactionId='"+req.query.transactionId+"'";
+        querySql +="and transactionId ='"+req.query.transactionId+"'";
     }
     if(checkParams(req.query.chaincodeId)){
-        querySql +="and chaincodeId='"+req.query.chaincodeId+"'";
+        querySql +="and chaincodeId like '%"+req.query.chaincodeId+"%'";
     }
-    console.log(querySql);
+    if(checkParams(req.query.channelId)){
+        querySql +="and channelId = '"+req.query.channelId+"'";
+    }
+    if(checkParams(req.query.params)){
+        querySql +="and params like  '%"+req.query.params+"%'";
+    }
+    console.log("***********getLogList querySql:"+querySql);
 
     if(req.query.page <1){
         return res.send(new RetMsg("100","页数不能小于1",""));
