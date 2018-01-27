@@ -1,6 +1,0 @@
-在项目所在的磁盘建立：
-盘符:opt\fabric-0.6\upload
-
-set HTTP_PORT=9090
-set HYP_REST_ENDPOINT=http://172.17.21.190:3050
-node exp-server.js
