@@ -1,8 +1,0 @@
-POST request Enroll on aaa  ...
-
-{"success":true,"secret":"aQOZdTgAzHBS","message":"Jimaa enrolled Successfully","token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MDU4MjQzMDgsInVzZXJuYW1lIjoiSmltYWEiLCJvcmdOYW1lIjoib3JnMSIsImlhdCI6MTUwNTc4ODMwOH0.Hu5gxAAKkUip3hCaKdDy87nRxujMMHR9qnthjvjtDNM"}
-
-ORG1 token is eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MDU4MjQzMDgsInVzZXJuYW1lIjoiSmltYWEiLCJvcmdOYW1lIjoib3JnMSIsImlhdCI6MTUwNTc4ODMwOH0.Hu5gxAAKkUip3hCaKdDy87nRxujMMHR9qnthjvjtDNM
-
-
-Total execution time : 2 secs ...

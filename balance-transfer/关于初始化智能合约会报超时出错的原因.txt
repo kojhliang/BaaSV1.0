@@ -1,8 +1,0 @@
-要改三个地方：
-1.一个是从config.json读取 "eventWaitTime":这个属性，默认是30秒，把它改成两分钟。"120000",
-2.在创建peer镜像的docker-compose文件里加入
-   - CORE_CHAINCODE_EXECUTETIMEOUT=200s 设置成200秒。
-3.最重要：
-   更改fabric-client的nodejs-sdk下的config文件夹下的default.json文件内容，把"request-timeout" : 45000,
-   改成"request-timeout" : 200000.
-       
